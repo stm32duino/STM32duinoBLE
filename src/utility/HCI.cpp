@@ -649,6 +649,7 @@ void HCIClass::handleEventPkt(uint8_t /*plen*/, uint8_t pdata[])
 
 void HCIClass::dumpPkt(const char* prefix, uint8_t plen, uint8_t pdata[])
 {
+#if defined(PRINT_HCI_INFO)
   if (_debug) {
     _debug->print(prefix);
 
@@ -665,6 +666,7 @@ void HCIClass::dumpPkt(const char* prefix, uint8_t plen, uint8_t pdata[])
     _debug->println();
     _debug->flush();
   }
+#endif /*(PRINT_HCI_INFO)*/
 }
 
 void HCIClass::setTransport(HCITransportInterface *HCITransport)
