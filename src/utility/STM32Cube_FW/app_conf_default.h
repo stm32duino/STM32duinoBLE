@@ -1,7 +1,7 @@
 /**
  ******************************************************************************
- * File Name          : app_conf.h
- * Description        : Application configuration file for STM32WPAN Middleware.
+ * File Name          : app_conf_default.h
+ * Description        : Default application configuration file for STM32WPAN Middleware.
  ******************************************************************************
  * @attention
  *
