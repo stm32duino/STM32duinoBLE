@@ -17,11 +17,8 @@
  */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef APP_CONF_H
-#define APP_CONF_H
-
-#include "ble_bufsize.h"
-#include "hw.h"
+#ifndef APP_CONF_DEFAULT_H
+#define APP_CONF_DEFAULT_H
 
 /******************************************************************************
  * Application Config
@@ -183,6 +180,6 @@
  */
 #define CFG_BLE_LL_ONLY 1
 
-#endif /* APP_CONF_H */
+#endif /* APP_CONF_DEFAULT_H */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
