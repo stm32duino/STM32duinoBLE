@@ -23,6 +23,14 @@
 #include <Arduino.h>
 #include "HCITransport.h"
 
+#define BLE_CMD_MAX_PARAM_LEN 255
+
+struct hci_le_set_data_length_cp0{
+    uint16_t Connection_Handle;
+    uint16_t TxOctets;
+    uint16_t TxTime;
+};
+
 class HCIClass {
 public:
   HCIClass();
@@ -73,6 +81,21 @@ public:
   virtual void noDebug();
 
   void setTransport(HCITransportInterface *HCITransport);
+
+  //-----------------------------
+  // @brief 
+  // @param connectionHandle Connection_Handle Connection handle for which the command applies. 
+  //          Values: 0x0000 ... 0x0EFF
+  // @param txOctects TxOctets Preferred maximum number of payload octets that the local
+  //          Controller should include in a single Link Layer packet on this
+  //          connection.
+  //          Values: 0x001B ... 0x00FB
+  // @param txTime TxTime Preferred maximum number of microseconds that the local
+  //         Controller should use to transmit a single Link Layer packet on this
+  //         connection.
+  //         Values: 0x0148 ... 0x4290
+  // @return Value indicating success or error code.
+  int hciSetDataLength(uint16_t connectionHandle, uint16_t txOctects, uint16_t txTime);
 
 private:
   virtual int sendCommand(uint16_t opcode, uint8_t plen = 0, void* parameters = NULL);
