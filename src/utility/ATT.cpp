@@ -257,7 +257,11 @@ void ATTClass::addConnection(uint16_t handle, uint8_t role, uint8_t peerBdaddrTy
     _eventHandlers[BLEConnected](BLEDevice(peerBdaddrType, peerBdaddr));
   }
   // TODO (krm) increase speed!
-  HCI.hciSetDataLength(handle, 251, 2120);
+  #ifdef CFG_BLE_ENABLE_SET_DATA_LENGTH
+  #if CFG_BLE_ENABLE_SET_DATA_LENGTH < 252 && CFG_BLE_ENABLE_SET_DATA_LENGTH > 26
+  HCI.hciSetDataLength(handle, CFG_BLE_ENABLE_SET_DATA_LENGTH, 2120);
+  #endif // CFG_BLE_ENABLE_SET_DATA_LENGTH < 252 && CFG_BLE_ENABLE_SET_DATA_LENGTH > 26
+  #endif // CFG_BLE_ENABLE_SET_DATA_LENGTH
 }
 
 void ATTClass::handleData(uint16_t connectionHandle, uint8_t dlen, uint8_t data[])

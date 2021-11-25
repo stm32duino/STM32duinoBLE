@@ -672,6 +672,7 @@ void HCIClass::setTransport(HCITransportInterface *HCITransport)
   _HCITransport = HCITransport;
 }
 
+#ifdef CFG_BLE_ENABLE_SET_DATA_LENGTH
 int HCIClass::hciSetDataLength(uint16_t connectionHandle, uint16_t txOctects, uint16_t txTime){
     const uint8_t payload_len = 6;
     const uint16_t opcode = 0x2022;
@@ -685,6 +686,7 @@ int HCIClass::hciSetDataLength(uint16_t connectionHandle, uint16_t txOctects, ui
 
     return sendCommand(opcode, payload_len, cmd_buffer);
 }
+#endif // CFG_BLE_ENABLE_SET_DATA_LENGTH
 
 #if !defined(FAKE_HCI)
 HCIClass HCIObj;

@@ -23,6 +23,10 @@
 #include <Arduino.h>
 #include "HCITransport.h"
 
+#if __has_include("app_conf_custom.h")
+#include "app_conf_custom.h"
+#endif
+
 #define BLE_CMD_MAX_PARAM_LEN 255
 
 struct hci_le_set_data_length_cp0{
@@ -82,6 +86,7 @@ public:
 
   void setTransport(HCITransportInterface *HCITransport);
 
+  #ifdef CFG_BLE_ENABLE_SET_DATA_LENGTH
   //-----------------------------
   // @brief 
   // @param connectionHandle Connection_Handle Connection handle for which the command applies. 
@@ -96,6 +101,7 @@ public:
   //         Values: 0x0148 ... 0x4290
   // @return Value indicating success or error code.
   int hciSetDataLength(uint16_t connectionHandle, uint16_t txOctects, uint16_t txTime);
+  #endif // CFG_BLE_ENABLE_SET_DATA_LENGTH
 
 private:
   virtual int sendCommand(uint16_t opcode, uint8_t plen = 0, void* parameters = NULL);
