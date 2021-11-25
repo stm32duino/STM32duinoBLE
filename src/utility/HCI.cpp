@@ -672,6 +672,22 @@ void HCIClass::setTransport(HCITransportInterface *HCITransport)
   _HCITransport = HCITransport;
 }
 
+#ifdef CFG_BLE_ENABLE_SET_DATA_LENGTH
+int HCIClass::hciSetDataLength(uint16_t connectionHandle, uint16_t txOctects, uint16_t txTime){
+    const uint8_t payload_len = 6;
+    const uint16_t opcode = 0x2022;
+    uint8_t cmd_buffer[BLE_CMD_MAX_PARAM_LEN];
+    hci_le_set_data_length_cp0 *cp0 = (hci_le_set_data_length_cp0*)(cmd_buffer);
+
+    // create payload
+    cp0->Connection_Handle = connectionHandle;
+    cp0->TxOctets = txOctects;
+    cp0->TxTime = txTime;
+
+    return sendCommand(opcode, payload_len, cmd_buffer);
+}
+#endif // CFG_BLE_ENABLE_SET_DATA_LENGTH
+
 #if !defined(FAKE_HCI)
 HCIClass HCIObj;
 HCIClass& HCI = HCIObj;
