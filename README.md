@@ -15,18 +15,6 @@ https://github.com/stm32duino/wiki/wiki/STM32duinoBLE#stm32duinoble-with-x-nucle
 
 For more information about ArduinoBLE library please visit the official web page at:
 https://github.com/arduino-libraries/ArduinoBLE
-
-# Configuration
-STM32Cube_WPAN has several configuration options, which are set in the `app_conf.h`.
-This package has a default configuration named `app_conf_default.h`.
-The user can include the file `app_conf_custom.h` to customize the ble application. Options wrapped in `#ifndef, #endif` in `app_conf_default.h` can be overwritten. Additional options can be added.
-
-## HCI data length
-By default the data length (max payload per BLE packet) is set to 27 bytes. This can cause fragmentation when tranmitting large characteristics using a large ATT_MTU.
-To increase the data length user must define `CFG_BLE_ENABLE_SET_DATA_LENGTH` (in `app_conf_default.h`). Further more, the wanted data length must bbe set in same define - eg: `#define CFG_BLE_ENABLE_SET_DATA_LENGTH 251`. Valid range: 27 --> 251.
-**Note: if this is enabled the pheripheral will attempt to increase the HCI data length with every connected device! There is no guarantee all BLE devices support all sizes!**
-Please see
-
 ## License
 
 ```
@@ -47,3 +35,12 @@ You should have received a copy of the GNU Lesser General Public
 License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 ```
+
+# Configuration
+STM32Cube_WPAN has several configuration options, which are set in the `app_conf.h`.
+This package has a default configuration named `app_conf_default.h`.
+The user can include the file `app_conf_custom.h` to customize the ble application. Options wrapped in `#ifndef, #endif` in `app_conf_default.h` can be overwritten. Additional options can be added.
+## HCI data length
+By default the data length (max payload per BLE packet) is set to 27 bytes. This can cause fragmentation when tranmitting large characteristics using a large ATT_MTU.
+To increase the data length user must define `CFG_BLE_ENABLE_SET_DATA_LENGTH` (in `app_conf_default.h`). Further more, the wanted data length must bbe set in same define - eg: `#define CFG_BLE_ENABLE_SET_DATA_LENGTH 251`. Valid range: 27 --> 251.
+**Note: if this is enabled the pheripheral will attempt to increase the HCI data length with every connected device! There is no guarantee all BLE devices support all sizes!**
