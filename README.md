@@ -41,6 +41,6 @@ STM32Cube_WPAN has several configuration options, which are set in the `app_conf
 This package has a default configuration named `app_conf_default.h`.
 The user can include the file `app_conf_custom.h` to customize the ble application. Options wrapped in `#ifndef, #endif` in `app_conf_default.h` can be overwritten. Additional options can be added.
 ## HCI data length
-By default the data length (max payload per BLE packet) is set to 27 bytes. This can cause fragmentation when tranmitting large characteristics using a large ATT_MTU.
+By default the data length (max payload per BLE packet) is set to 27 bytes. This can cause fragmentation when transmitting large characteristics using a large ATT_MTU.
 To increase the data length user must define `CFG_BLE_ENABLE_SET_DATA_LENGTH` (in `app_conf_default.h`). Further more, the wanted data length must bbe set in same define - eg: `#define CFG_BLE_ENABLE_SET_DATA_LENGTH 251`. Valid range: 27 --> 251.
 **Note: if this is enabled the pheripheral will attempt to increase the HCI data length with every connected device! There is no guarantee all BLE devices support all sizes!**
