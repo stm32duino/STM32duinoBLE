@@ -162,9 +162,11 @@ extern "C" {
   {
     SHCI_Success = 0x00,
     SHCI_UNKNOWN_CMD = 0x01,
+    SHCI_MEMORY_CAPACITY_EXCEEDED_ERR_CODE=  0x07,
     SHCI_ERR_UNSUPPORTED_FEATURE = 0x11,
     SHCI_ERR_INVALID_HCI_CMD_PARAMS = 0x12,
-    SHCI_ERR_INVALID_PARAMS = 0x42,
+    SHCI_ERR_INVALID_PARAMS = 0x42,    /* only used for release < v1.13.0 */
+    SHCI_ERR_INVALID_PARAMS_V2 = 0x92, /* available for release >= v1.13.0 */
     SHCI_FUS_CMD_NOT_SUPPORTED = 0xFF,
   } SHCI_CmdStatus_t;
 
@@ -431,7 +433,7 @@ extern "C" {
    * PrWriteListSize
    * NOTE: This parameter is ignored by the CPU2 when the parameter "Options" is set to "LL_only" ( see Options description in that structure )
    *
-   * Maximum number of supported “prepare write request”
+   * Maximum number of supported \93prepare write request\94
    *    - Min value: given by the macro DEFAULT_PREP_WRITE_LIST_SIZE
    *    - Max value: a value higher than the minimum required can be specified, but it is not recommended
    */
@@ -487,10 +489,9 @@ extern "C" {
 
   /**
    * LsSource
-   * Source for the 32 kHz slow speed clock.
-   *    - External crystal LSE: 0 - No calibration
-   *    - Others:1 - As the accuracy of this oscillator can vary depending upon external conditions (temperature),
-   *      it is calibrated every second to ensure correct behavior of timing sensitive BLE operations
+   * Some information for Low speed clock mapped in bits field
+   * - bit 0:   1: Calibration for the RF system wakeup clock source   0: No calibration for the RF system wakeup clock source
+   * - bit 1:   1: STM32W5M Module device                              0: Other devices as STM32WBxx SOC, STM32WB1M module
    */
   uint8_t LsSource;
 
@@ -498,7 +499,7 @@ extern "C" {
    * MaxConnEventLength
    * This parameter determines the maximum duration of a slave connection event. When this duration is reached the slave closes
    * the current connections event (whatever is the CE_length parameter specified by the master in HCI_CREATE_CONNECTION HCI command),
-   * expressed in units of 625/256 µs (~2.44 µs)
+   * expressed in units of 625/256 \B5s (~2.44 \B5s)
    *    - Min value: 0 (if 0 is specified, the master and slave perform only a single TX-RX exchange per connection event)
    *    - Max value: 1638400 (4000 ms). A higher value can be specified (max 0xFFFFFFFF) but results in a maximum connection time
    *      of 4000 ms as specified. In this case the parameter is not applied, and the predicted CE length calculated on slave is not shortened
@@ -507,7 +508,7 @@ extern "C" {
 
   /**
    * HsStartupTime
-   * Startup time of the high speed (16 or 32 MHz) crystal oscillator in units of 625/256 µs (~2.44 µs).
+   * Startup time of the high speed (16 or 32 MHz) crystal oscillator in units of 625/256 \B5s (~2.44 \B5s).
    *    - Min value: 0
    *    - Max value:  820 (~2 ms). A higher value can be specified, but the value that implemented in stack is forced to ~2 ms
    */
@@ -564,6 +565,32 @@ extern "C" {
    */
   uint8_t rx_model_config;
 
+  /* Maximum number of advertising sets.
+   * Range: 1 .. 8 with limitation:
+   * This parameter is linked to max_adv_data_len such as both compliant with allocated Total memory computed with BLE_EXT_ADV_BUFFER_SIZE based
+   * on Max Extended advertising configuration supported.
+   * This parameter is considered by the CPU2 when Options has SHCI_C2_BLE_INIT_OPTIONS_EXT_ADV flag set
+   */
+  uint8_t max_adv_set_nbr;
+
+  /* Maximum advertising data length (in bytes)
+   * Range: 31 .. 1650 with limitation:
+   * This parameter is linked to max_adv_set_nbr such as both compliant with allocated Total memory computed with BLE_EXT_ADV_BUFFER_SIZE based
+   * on Max Extended advertising configuration supported.
+   * This parameter is considered by the CPU2 when Options has SHCI_C2_BLE_INIT_OPTIONS_EXT_ADV flag set
+   */
+  uint16_t max_adv_data_len;
+
+  /* RF TX Path Compensation Value (16-bit signed integer). Units: 0.1 dB.
+   * Range: -1280 .. 1280
+   */
+  int16_t tx_path_compens;
+
+  /* RF RX Path Compensation Value (16-bit signed integer). Units: 0.1 dB.
+   * Range: -1280 .. 1280
+   */
+  int16_t rx_path_compens;
+
       } SHCI_C2_Ble_Init_Cmd_Param_t;
 
   typedef PACKED_STRUCT{
@@ -600,6 +627,13 @@ extern "C" {
 #define SHCI_C2_BLE_INIT_RX_MODEL_AGC_RSSI_LEGACY                     (0<<0)
 #define SHCI_C2_BLE_INIT_RX_MODEL_AGC_RSSI_BLOCKER                    (1<<0)
 
+   /**
+   * LsSource information
+   */
+#define SHCI_C2_BLE_INIT_CFG_BLE_LSE_NOCALIB                     (0<<0)
+#define SHCI_C2_BLE_INIT_CFG_BLE_LSE_CALIB                       (1<<0)
+#define SHCI_C2_BLE_INIT_CFG_BLE_LSE_OTHER_DEV                   (0<<1)
+#define SHCI_C2_BLE_INIT_CFG_BLE_LSE_MOD5MM_DEV                  (1<<1)
 
 #define SHCI_OPCODE_C2_THREAD_INIT              (( SHCI_OGF << 10) + SHCI_OCF_C2_THREAD_INIT)
 /** No command parameters */
@@ -624,6 +658,11 @@ extern "C" {
    */
       uint8_t sys_dbg_cfg1;
       uint8_t reserved[2];
+      uint16_t STBY_DebugGpioaPinList;
+      uint16_t STBY_DebugGpiobPinList;
+      uint16_t STBY_DebugGpiocPinList;
+      uint16_t STBY_DtbGpioaPinList;
+      uint16_t STBY_DtbGpiobPinList;
     } SHCI_C2_DEBUG_GeneralConfig_t;
 
     typedef PACKED_STRUCT{
@@ -1219,7 +1258,7 @@ typedef struct {
   *                               When set to 0, data are kept in internal SRAM on CPU2
   *                               Otherwise, data are copied in the cache pointed by ThreadNvmRamAddress
   *                               The size of the buffer shall be THREAD_NVM_SRAM_SIZE (number of 32bits)
-  *                               The buffer shall be allocated in SRAM2
+  *                               The buffer shall be allocated in SRAM1
   *
   *                    Please check macro definition to be used for this function
   *                    They are defined in this file next to the definition of SHCI_OPCODE_C2_CONFIG

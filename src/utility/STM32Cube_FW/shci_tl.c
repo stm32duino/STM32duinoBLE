@@ -15,12 +15,9 @@
  *
  ******************************************************************************
  */
-
 #if defined(STM32WBxx)
 /* Includes ------------------------------------------------------------------*/
 #include "stm32_wpan_common.h"
-
-#include <Arduino.h>
 
 #include "stm_list.h"
 #include "shci_tl.h"
@@ -252,12 +249,11 @@ static void TlUserEvtReceived(TL_EvtPacket_t *shcievt)
 /* Weak implementation ----------------------------------------------------------------*/
 __WEAK void shci_cmd_resp_wait(uint32_t timeout)
 {
+  (void)timeout;
+
   CmdRspStatusFlag = SHCI_TL_CMD_RESP_WAIT;
-  for (unsigned long start = millis(); (millis() - start) < timeout;) {
-    if (CmdRspStatusFlag == SHCI_TL_CMD_RESP_RELEASE) {
-      break;
-    }
-  }
+  while(CmdRspStatusFlag != SHCI_TL_CMD_RESP_RELEASE);
+
   return;
 }
 
@@ -269,6 +265,5 @@ __WEAK void shci_cmd_resp_release(uint32_t flag)
 
   return;
 }
-
 #endif /* STM32WBxx */
 

@@ -132,7 +132,6 @@ void IPCC_C1_TX_IRQHandler(void)
     HW_IPCC_BLE_AclDataEvtHandler();
   }
 }
-
 /******************************************************************************
  * GENERAL
  ******************************************************************************/
@@ -140,15 +139,16 @@ void HW_IPCC_Enable( void )
 {
   /**
   * Such as IPCC IP available to the CPU2, it is required to keep the IPCC clock running
-    when FUS is running on CPU2 and CPU1 enters deep sleep mode
+  * when FUS is running on CPU2 and CPU1 enters deep sleep mode
   */
   LL_C2_AHB3_GRP1_EnableClock(LL_C2_AHB3_GRP1_PERIPH_IPCC);
 
-   /**
-   * When the device is out of standby, it is required to use the EXTI mechanism to wakeup CPU2
-   */
-  LL_C2_EXTI_EnableEvent_32_63( LL_EXTI_LINE_41 );
+  /**
+  * When the device is out of standby, it is required to use the EXTI mechanism to wakeup CPU2
+  */
   LL_EXTI_EnableRisingTrig_32_63( LL_EXTI_LINE_41 );
+  /* It is required to have at least a system clock cycle before a SEV after LL_EXTI_EnableRisingTrig_32_63() */
+  LL_C2_EXTI_EnableEvent_32_63( LL_EXTI_LINE_41 );
 
   /**
    * In case the SBSFU is implemented, it may have already set the C2BOOT bit to startup the CPU2.
@@ -222,6 +222,8 @@ static void HW_IPCC_BLE_AclDataEvtHandler( void )
   return;
 }
 
+__weak void HW_IPCC_BLE_AclDataAckNot( void ){};
+__weak void HW_IPCC_BLE_RxEvtNot( void ){};
 __WEAK void HW_IPCC_BLE_AclDataAckNot( void ){};
 __WEAK void HW_IPCC_BLE_RxEvtNot( void ){};
 
@@ -261,9 +263,11 @@ static void HW_IPCC_SYS_EvtHandler( void )
   return;
 }
 
+/******************************************************************************
+ * MAC 802.15.4
+ ******************************************************************************/
 __WEAK void HW_IPCC_SYS_CmdEvtNot( void ){};
 __WEAK void HW_IPCC_SYS_EvtNot( void ){};
-
 /******************************************************************************
  * THREAD
  ******************************************************************************/
@@ -459,6 +463,16 @@ void HW_IPCC_LLD_BLE_SendRspAck( void )
 #endif /* LLD_BLE_WB */
 
 /******************************************************************************
+ * ZIGBEE
+ ******************************************************************************/
+void HW_IPCC_ZIGBEE_SendM4AckToM0Notify( void )
+{
+  LL_C1_IPCC_ClearFlag_CHx( IPCC, HW_IPCC_ZIGBEE_APPLI_NOTIF_ACK_CHANNEL );
+  LL_C1_IPCC_EnableReceiveChannel( IPCC, HW_IPCC_ZIGBEE_APPLI_NOTIF_ACK_CHANNEL );
+
+  return;
+}
+/******************************************************************************
  * MEMORY MANAGER
  ******************************************************************************/
 void HW_IPCC_MM_SendFreeBuf( void (*cb)( void ) )
@@ -508,5 +522,6 @@ static void HW_IPCC_TRACES_EvtHandler( void )
   return;
 }
 
+__weak void HW_IPCC_TRACES_EvtNot( void ){};
 __WEAK void HW_IPCC_TRACES_EvtNot( void ){};
 #endif /* STM32WBxx */

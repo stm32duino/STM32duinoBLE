@@ -91,6 +91,7 @@ extern "C" {
     uint8_t   *notack_buffer;
     uint8_t   *clicmdrsp_buffer;
     uint8_t   *otcmdrsp_buffer;
+    uint8_t   *clinot_buffer;
   } MB_ThreadTable_t;
 
   typedef struct
@@ -104,7 +105,6 @@ extern "C" {
     uint8_t   *cmdrsp_buffer;
     uint8_t   *m0cmd_buffer;
   } MB_BleLldTable_t;
-
   /**
    * msg
    * [0:7]   = cmd/evt
@@ -241,5 +241,6 @@ typedef struct
 #define HW_IPCC_LLDTESTS_CLI_RSP_CHANNEL                LL_IPCC_CHANNEL_5
 #define HW_IPCC_BLE_LLD_CLI_RSP_CHANNEL                 LL_IPCC_CHANNEL_5
 #define HW_IPCC_BLE_LLD_RSP_CHANNEL                     LL_IPCC_CHANNEL_5
+#define HW_IPCC_ZIGBEE_M0_REQUEST_CHANNEL               LL_IPCC_CHANNEL_5
 #endif /*__MBOX_H */
 
