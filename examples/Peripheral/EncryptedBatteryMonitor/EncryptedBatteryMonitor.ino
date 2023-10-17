@@ -15,7 +15,7 @@
   This example code is in the public domain.
 */
 
-#include <ArduinoBLE.h>
+#include <STM32duinoBLE.h>
 
 
 #define PAIR_BUTTON 3        // button for pairing

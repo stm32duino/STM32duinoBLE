@@ -603,17 +603,6 @@ int HCIClass::leRand(uint8_t randomNumber[8])
   return result;
 }
 
-int HCIClass::leRand(uint8_t randomNumber[8])
-{
-  int result = sendCommand(OGF_LE_CTL << 10 | OCF_LE_RAND);
-
-  if (result == 0) {
-    memcpy(randomNumber, _cmdResponse, 8);
-  }
-
-  return result;
-}
-
 int HCIClass::sendAclPkt(uint16_t handle, uint8_t cid, uint8_t plen, void* data)
 {
   while (_pendingPkt >= _maxPkt) {
@@ -1412,13 +1401,7 @@ int HCIClass::leEncrypt(uint8_t* key, uint8_t* plaintext, uint8_t* status, uint8
 #endif
   return res;
 }
-int HCIClass::leRand(uint8_t rand[]){
-  int res = sendCommand(OGF_LE_CTL << 10 | LE_COMMAND::RANDOM);
-  if(res == 0){
-    memcpy(rand,_cmdResponse, 8); /// backwards but it's a random number
-  }
-  return res;
-}
+
 int HCIClass::getLTK(uint8_t* address, uint8_t* LTK){
   if(_getLTK!=0){
     return _getLTK(address, LTK);

@@ -1936,6 +1936,7 @@ int ATTClass::getPeerResolvedAddress(uint16_t connectionHandle, uint8_t resolved
     return 1;
   }
   return 0;
+}
 void ATTClass::setOwnBdaddrType(uint8_t ownBdaddrType)
 {
   _ownBdaddrType = ownBdaddrType;

@@ -119,8 +119,16 @@ public:
 
   // TODO: Send command be private again & use ATT implementation of send command within ATT.
   void setTransport(HCITransportInterface *HCITransport);
+  virtual int getLTK(uint8_t *address, uint8_t *LTK);
+  virtual int storeLTK(uint8_t *address, uint8_t *LTK);
+  virtual int storeIRK(uint8_t *address, uint8_t *IRK);
+  int (*_storeIRK)(uint8_t *address, uint8_t *peerIrk) = 0;
+  int (*_getIRKs)(uint8_t *nIRKs, uint8_t **BADDR_type, uint8_t ***BADDRs, uint8_t ***IRKs) = 0;
+  int (*_storeLTK)(uint8_t *, uint8_t *) = 0;
+  int (*_getLTK)(uint8_t *, uint8_t *) = 0;
+  void (*_displayCode)(uint32_t confirmationCode) = 0;
+  bool (*_binaryConfirmPairing)() = 0;
 
-private:
   virtual int sendCommand(uint16_t opcode, uint8_t plen = 0, void* parameters = NULL);
   uint8_t remotePublicKeyBuffer[64];
   uint8_t localPublicKeyBuffer[64];
@@ -130,15 +138,7 @@ private:
   uint8_t DHKey[32];
   uint8_t localAddr[6];
   uint8_t LTK[16];
-  virtual int getLTK(uint8_t* address, uint8_t* LTK);
-  virtual int storeLTK(uint8_t* address, uint8_t* LTK);
-  virtual int storeIRK(uint8_t* address, uint8_t* IRK);
-  int (*_storeIRK)(uint8_t* address, uint8_t* peerIrk) = 0;
-  int (*_getIRKs)(uint8_t* nIRKs,uint8_t** BADDR_type, uint8_t*** BADDRs, uint8_t*** IRKs) = 0;
-  int (*_storeLTK)(uint8_t*, uint8_t*) = 0;
-  int (*_getLTK)(uint8_t*, uint8_t*) = 0;
-  void (*_displayCode)(uint32_t confirmationCode) = 0;
-  bool (*_binaryConfirmPairing)() = 0;
+  
 
 private:
 

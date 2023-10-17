@@ -112,8 +112,6 @@ public:
 
   void setOwnBdaddrType(uint8_t ownBdaddrType);
 
-  void setOwnBdaddrType(uint8_t ownBdaddrType);
-
 private:
   virtual void error(uint16_t connectionHandle, uint8_t dlen, uint8_t data[]);
   virtual void mtuReq(uint16_t connectionHandle, uint8_t dlen, uint8_t data[]);

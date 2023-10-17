@@ -15,9 +15,9 @@
   This example code is in the public domain.
 */
 
-#include <ArduinoBLE.h>
+#include <STM32duinoBLE.h>
 
- // Bluetooth® Low Energy Battery Service
+// Bluetooth® Low Energy Battery Service
 BLEService batteryService("180F");
 
 // Bluetooth® Low Energy Battery Level Characteristic
