@@ -22,7 +22,7 @@
 
 #include "GAP.h"
 
-#define GAP_MAX_DISCOVERED_QUEUE_SIZE 5
+#define GAP_MAX_DISCOVERED_QUEUE_SIZE 32
 
 #define GAP_ADV_IND (0x00)
 #define GAP_ADV_SCAN_IND (0x02)
@@ -228,8 +228,10 @@ void GAPClass::handleLeAdvertisingReport(uint8_t type, uint8_t addressType, uint
 
   if (discoveredDevice == NULL) {
     if (_discoveredDevices.size() >= GAP_MAX_DISCOVERED_QUEUE_SIZE) {
-      // drop
-      return;
+      BLEDevice* device_first = _discoveredDevices.remove(0);
+      if (device_first != NULL) {
+        delete device_first;
+      }
     }
 
     discoveredDevice = new BLEDevice(addressType, address);

@@ -24,6 +24,12 @@
 #include "BLEProperty.h"
 #include "BLEStringCharacteristic.h"
 #include "BLETypedCharacteristics.h"
+#include "utility/btct.h"
+
+#if defined(STM32WBxx)
+#include "utility/HCISharedMemTransport.h"
+#endif
+#include "utility/HCISpiTransport.h"
 
 #if defined(STM32WBxx)
 #include "utility/HCISharedMemTransport.h"

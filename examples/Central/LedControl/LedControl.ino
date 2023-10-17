@@ -1,9 +1,9 @@
 /*
   LED Control
 
-  This example scans for BLE peripherals until one with the advertised service
+  This example scans for Bluetooth® Low Energy peripherals until one with the advertised service
   "19b10000-e8f2-537e-4f6c-d104768a1214" UUID is found. Once discovered and connected,
-  it will remotely control the BLE Peripheral's LED, when the button is pressed or released.
+  it will remotely control the Bluetooth® Low Energy peripheral's LED, when the button is pressed or released.
 
   The circuit:
   - Boards with integrated BLE or Nucleo board plus one of BLE X-Nucleo shield::
@@ -119,14 +119,14 @@ void setup() {
   // configure the button pin as input
   pinMode(buttonPin, INPUT_PULLUP);
 
-  // initialize the BLE hardware
+  // initialize the Bluetooth® Low Energy hardware
   BLE.begin();
 
   // Get initial button state
   initialButtonState = digitalRead(buttonPin);
   oldButtonState = initialButtonState;
 
-  Serial.println("BLE Central - LED control");
+  Serial.println("Bluetooth® Low Energy Central - LED control");
 
   // start scanning for peripherals
   int ret = 1;
