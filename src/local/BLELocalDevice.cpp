@@ -18,28 +18,14 @@
 */
 
 #include "utility/ATT.h"
-#include "utility/HCI.h"
 #include "utility/GAP.h"
 #include "utility/GATT.h"
 #include "utility/L2CAPSignaling.h"
 
 #include "BLELocalDevice.h"
 
-#if defined(ARDUINO_PORTENTA_H7_M4) || defined(ARDUINO_PORTENTA_H7_M7) || defined(ARDUINO_OPTA)
-#ifndef BT_REG_ON
-#define BT_REG_ON PJ_12
-#endif
-#elif defined(ARDUINO_NICLA_VISION)
-#ifndef BT_REG_ON
-#define BT_REG_ON PF_14
-#endif
-#elif defined(ARDUINO_GIGA)
-#ifndef BT_REG_ON
-#define BT_REG_ON PA_10
-#endif
-#endif
-
-BLELocalDevice::BLELocalDevice()
+BLELocalDevice::BLELocalDevice(HCITransportInterface *HCITransport, uint8_t ownBdaddrType) :
+  _HCITransport(HCITransport), _ownBdaddrType(ownBdaddrType)
 {
   _advertisingData.setFlags(BLEFlagsGeneralDiscoverable | BLEFlagsBREDRNotSupported);
 }
@@ -50,63 +36,7 @@ BLELocalDevice::~BLELocalDevice()
 
 int BLELocalDevice::begin()
 {
-#if defined(ARDUINO_SAMD_MKRWIFI1010) || defined(ARDUINO_AVR_UNO_WIFI_REV2) || defined(ARDUINO_SAMD_NANO_33_IOT) || defined(ARDUINO_NANO_RP2040_CONNECT)
-  // reset the NINA in BLE mode
-  pinMode(SPIWIFI_SS, OUTPUT);
-  pinMode(NINA_RESETN, OUTPUT);
-  
-  digitalWrite(SPIWIFI_SS, LOW);
-#endif
-
-#if defined(ARDUINO_SAMD_MKRWIFI1010) || defined(ARDUINO_AVR_UNO_WIFI_REV2)
-  digitalWrite(NINA_RESETN, HIGH);
-  delay(100);
-  digitalWrite(NINA_RESETN, LOW);
-  delay(750);
-#elif defined(ARDUINO_SAMD_NANO_33_IOT) || defined(ARDUINO_NANO_RP2040_CONNECT)
-  // inverted reset
-  digitalWrite(NINA_RESETN, LOW);
-  delay(100);
-  digitalWrite(NINA_RESETN, HIGH);
-  delay(750);
-#elif defined(ARDUINO_PORTENTA_H7_M4) || defined(ARDUINO_PORTENTA_H7_M7) || defined(ARDUINO_NICLA_VISION) || defined(ARDUINO_GIGA) || defined(ARDUINO_OPTA)
-  // BT_REG_ON -> HIGH
-  pinMode(BT_REG_ON, OUTPUT);
-  digitalWrite(BT_REG_ON, HIGH);
-#elif defined(ARDUINO_PORTENTA_C33)
-#define NINA_GPIO0      (100)
-#define NINA_RESETN     (101)
-  pinMode(NINA_GPIO0, OUTPUT);
-  pinMode(NINA_RESETN, OUTPUT);
-  Serial5.begin(921600);
-
-  digitalWrite(NINA_GPIO0, HIGH);
-  delay(100);
-  digitalWrite(NINA_RESETN, HIGH);
-  digitalWrite(NINA_RESETN, LOW);
-  digitalWrite(NINA_RESETN, HIGH);
-  auto _start = millis();
-  while (millis() - _start < 500) {
-    if (Serial5.available()) {
-      Serial5.read();
-    }
-  }
-  //pinMode(94, OUTPUT);
-  //digitalWrite(94, LOW);
-#endif
-
-
-#ifdef ARDUINO_AVR_UNO_WIFI_REV2
-  // set SS HIGH
-  digitalWrite(SPIWIFI_SS, HIGH);
-
-  // set RTS HIGH
-  pinMode(NINA_RTS, OUTPUT);
-  digitalWrite(NINA_RTS, HIGH);
-
-  // set CTS as input
-  pinMode(NINA_CTS, INPUT);
-#endif
+  HCI.setTransport(_HCITransport);
 
   if (!HCI.begin()) {
     end();
@@ -118,6 +48,29 @@ int BLELocalDevice::begin()
   if (HCI.reset() != 0) {
     end();
 
+    return 0;
+  }
+
+  uint8_t randomNumber[8];
+  if (HCI.leRand(randomNumber) != 0) {
+    end();
+    return 0;
+  }
+  /* Random address only requires 6 bytes (48 bits)
+   * Force both MSB bits to b00 in order to define Static Random Address
+   */
+  randomNumber[5] |= 0xC0;
+
+  // Copy the random address in private variable as it will be sent to the BLE chip
+  randomAddress [0] = randomNumber[0];
+  randomAddress [1] = randomNumber[1];
+  randomAddress [2] = randomNumber[2];
+  randomAddress [3] = randomNumber[3];
+  randomAddress [4] = randomNumber[4];
+  randomAddress [5] = randomNumber[5];
+
+  if (HCI.leSetRandomAddress((uint8_t*)randomNumber) != 0) {
+    end();
     return 0;
   }
 
@@ -204,6 +157,10 @@ int BLELocalDevice::begin()
 
   GATT.begin();
 
+  GAP.setOwnBdaddrType(_ownBdaddrType);
+
+  ATT.setOwnBdaddrType(_ownBdaddrType);
+
   return 1;
 }
 
@@ -212,16 +169,16 @@ void BLELocalDevice::end()
   GATT.end();
 
   HCI.end();
+}
 
-#if defined(ARDUINO_SAMD_MKRWIFI1010) || defined(ARDUINO_AVR_UNO_WIFI_REV2)
-  // disable the NINA
-  digitalWrite(NINA_RESETN, HIGH);
-#elif defined(ARDUINO_SAMD_NANO_33_IOT) || defined(ARDUINO_NANO_RP2040_CONNECT)
-  // disable the NINA
-  digitalWrite(NINA_RESETN, LOW);
-#elif defined(ARDUINO_PORTENTA_H7_M4) || defined(ARDUINO_PORTENTA_H7_M7) || defined(ARDUINO_NICLA_VISION) || defined(ARDUINO_GIGA) || defined(ARDUINO_OPTA)
-  digitalWrite(BT_REG_ON, LOW);
-#endif
+void BLELocalDevice::getRandomAddress(uint8_t buff[6])
+{
+  buff [0] = randomAddress[0];
+  buff [1] = randomAddress[1];
+  buff [2] = randomAddress[2];
+  buff [3] = randomAddress[3];
+  buff [4] = randomAddress[4];
+  buff [5] = randomAddress[5];
 }
 
 void BLELocalDevice::poll()
@@ -379,9 +336,9 @@ int BLELocalDevice::scanForAddress(String address, bool withDuplicates)
   return GAP.scanForAddress(address, withDuplicates);
 }
 
-void BLELocalDevice::stopScan()
+int BLELocalDevice::stopScan()
 {
-  GAP.stopScan();
+  return GAP.stopScan();
 }
 
 BLEDevice BLELocalDevice::central()
@@ -477,8 +434,3 @@ void BLELocalDevice::noDebug()
 {
   HCI.noDebug();
 }
-
-#if !defined(FAKE_BLELOCALDEVICE)
-BLELocalDevice BLEObj;
-BLELocalDevice& BLE = BLEObj;
-#endif

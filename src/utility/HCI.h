@@ -22,7 +22,7 @@
 
 #include <Arduino.h>
 #include "bitDescriptions.h"
-
+#include "HCITransport.h"
 #include "L2CAPSignaling.h"
 
 #define OGF_LINK_CTL           0x01
@@ -118,6 +118,9 @@ public:
   virtual void noDebug();
 
   // TODO: Send command be private again & use ATT implementation of send command within ATT.
+  void setTransport(HCITransportInterface *HCITransport);
+
+private:
   virtual int sendCommand(uint16_t opcode, uint8_t plen = 0, void* parameters = NULL);
   uint8_t remotePublicKeyBuffer[64];
   uint8_t localPublicKeyBuffer[64];
@@ -159,6 +162,8 @@ private:
   uint8_t _pendingPkt;
 
   uint8_t _aclPktBuffer[255];
+
+  HCITransportInterface *_HCITransport;
 };
 
 extern HCIClass& HCI;

@@ -112,7 +112,7 @@ ATTClass::~ATTClass()
 
 bool ATTClass::connect(uint8_t peerBdaddrType, uint8_t peerBdaddr[6])
 {
-  if (HCI.leCreateConn(0x0060, 0x0030, 0x00, peerBdaddrType, peerBdaddr, 0x00,
+  if (HCI.leCreateConn(0x0060, 0x0030, 0x00, peerBdaddrType, peerBdaddr, _ownBdaddrType,
                         0x0006, 0x000c, 0x0000, 0x00c8, 0x0004, 0x0006) != 0) {
     return false;
   }
@@ -1936,6 +1936,9 @@ int ATTClass::getPeerResolvedAddress(uint16_t connectionHandle, uint8_t resolved
     return 1;
   }
   return 0;
+void ATTClass::setOwnBdaddrType(uint8_t ownBdaddrType)
+{
+  _ownBdaddrType = ownBdaddrType;
 }
 
 #if !defined(FAKE_ATT)

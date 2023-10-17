@@ -54,7 +54,7 @@ int GAPClass::advertise(uint8_t* advData, uint8_t advDataLen, uint8_t* scanData,
 
   stopAdvertise();
 
-  if (HCI.leSetAdvertisingParameters(_advertisingInterval, _advertisingInterval, type, 0x00, 0x00, directBdaddr, 0x07, 0) != 0) {
+  if (HCI.leSetAdvertisingParameters(_advertisingInterval, _advertisingInterval, type, _ownBdaddrType, 0x00, directBdaddr, 0x07, 0) != 0) {
     return 0;
   }
 
@@ -84,16 +84,15 @@ void GAPClass::stopAdvertise()
 
 int GAPClass::scan(bool withDuplicates)
 {
-  HCI.leSetScanEnable(false, true);
+  if(_scanning) {
+    // Check if the HCI command fails
+    if (HCI.leSetScanEnable(false, true) != 0) {
+      return 0;
+    }
+  }
 
-  // active scan, 20 ms scan interval (N * 0.625), 20 ms scan window (N * 0.625), public own address type, no filter
-  /*
-    Warning (from BLUETOOTH SPECIFICATION 5.x):
-    - scan interval: mandatory range from 0x0012 to 0x1000; only even values are valid
-    - scan window: mandatory range from 0x0011 to 0x1000
-    - The scan window can only be less than or equal to the scan interval
-  */
-  if (HCI.leSetScanParameters(0x01, 0x0020, 0x0020, 0x00, 0x00) != 0) {
+  // active scan, 10 ms scan interval (N * 0.625), 10 ms scan window (N * 0.625), public or static random own address type, no filter
+  if (HCI.leSetScanParameters(0x01, 0x0010, 0x0010, _ownBdaddrType, 0x00) != 0) {
     return false;
   }
 
@@ -133,9 +132,14 @@ int GAPClass::scanForAddress(String address, bool withDuplicates)
   return scan(withDuplicates);
 }
 
-void GAPClass::stopScan()
+int GAPClass::stopScan()
 {
-  HCI.leSetScanEnable(false, false);
+  if(_scanning) {
+    // Check if the HCI command fails
+    if (HCI.leSetScanEnable(false, false) != 0) {
+      return 0;
+    }
+  }
 
   _scanning = false;
 
@@ -146,6 +150,8 @@ void GAPClass::stopScan()
   }
 
   _discoveredDevices.clear();
+
+  return 1;
 }
 
 BLEDevice GAPClass::available()
@@ -264,6 +270,11 @@ bool GAPClass::matchesScanFilter(const BLEDevice& device)
   }
 
   return true;
+}
+
+void GAPClass::setOwnBdaddrType(uint8_t ownBdaddrType)
+{
+  _ownBdaddrType = ownBdaddrType;
 }
 
 #if !defined(FAKE_GAP)

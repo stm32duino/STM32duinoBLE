@@ -10,33 +10,10 @@ jobs:
     strategy:
       matrix:
         fqbn:
-          - arduino:samd:mkrwifi1010
-          - arduino:samd:nano_33_iot
-          - arduino:megaavr:uno2018:mode=on
-          - arduino:mbed:nano33ble
-          - arduino:mbed_nano:nanorp2040connect
-          - arduino:renesas_uno:unor4wifi
-
-    steps:
-      - uses: actions/checkout@v4
-      - uses: arduino/compile-sketches@v1
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          fqbn: ${{ matrix.fqbn }}
-          
-  build-for-esp32:
-    runs-on: ubuntu-latest
-    
-    strategy:
-      matrix:
-        fqbn:
-          - esp32:esp32:esp32
-          - esp32:esp32:esp32s3
-          - esp32:esp32:esp32c3
-          # future bluetooth chips
-          #- esp32:esp32:esp32c2
-          #- esp32:esp32:esp32c6
-          #- esp32:esp32:esp32h2
+          - STMicroelectronics:stm32:Eval:pnum=STEVAL_MKSBOX1V1,usb=CDCgen
+          - STMicroelectronics:stm32:Nucleo_64:pnum=NUCLEO_L476RG
+          - STMicroelectronics:stm32:Disco:pnum=B_L475E_IOT01A
+          - STMicroelectronics:stm32:Nucleo_64:pnum=P_NUCLEO_WB55RG
 
     steps:
       - uses: actions/checkout@v4
@@ -45,14 +22,5 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           fqbn: ${{ matrix.fqbn }}
           platforms: |
-            - name: esp32:esp32
-              source-url: https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
-          sketch-paths: |
-            - examples/Central/Scan
-            - examples/Central/PeripheralExplorer
-            - examples/Central/ScanCallback
-            - examples/Central/SensorTagButton
-            - examples/Peripheral/Advertising/EnhancedAdvertising
-            - examples/Peripheral/Advertising/RawDataAdvertising
-          cli-compile-flags: |
-            - --warnings="none"
+            - source-url: https://github.com/stm32duino/BoardManagerFiles/raw/main/package_stmicroelectronics_index.json
+              name: STMicroelectronics:stm32

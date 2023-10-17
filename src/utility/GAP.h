@@ -37,13 +37,15 @@ public:
   virtual int scanForName(String name, bool withDuplicates);
   virtual int scanForUuid(String uuid, bool withDuplicates);
   virtual int scanForAddress(String address, bool withDuplicates);
-  virtual void stopScan();
+  virtual int stopScan();
   virtual BLEDevice available();
 
   virtual void setAdvertisingInterval(uint16_t advertisingInterval);
   virtual void setConnectable(bool connectable);
 
   virtual void setEventHandler(BLEDeviceEvent event, BLEDeviceEventHandler eventHandler);
+
+  void setOwnBdaddrType(uint8_t ownBdaddrType);
 
 protected:
   friend class HCIClass;
@@ -67,6 +69,7 @@ private:
   String _scanNameFilter;
   String _scanUuidFilter;
   String _scanAddressFilter;
+  uint8_t _ownBdaddrType;
 };
 
 extern GAPClass& GAP;

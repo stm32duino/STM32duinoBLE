@@ -20,6 +20,7 @@
 #ifndef _BLE_LOCAL_DEVICE_H_
 #define _BLE_LOCAL_DEVICE_H_
 
+#include "utility/HCI.h"
 #include "BLEDevice.h"
 #include "BLEService.h"
 #include "BLEAdvertisingData.h"
@@ -29,10 +30,14 @@ enum Pairable {
   YES = 1,
   ONCE = 2,
 };
+#define PUBLIC_ADDR                 (0)
+#define STATIC_RANDOM_ADDR          (1)
+#define RESOLVABLE_PRIVATE_ADDR     (2)
+#define NON_RESOLVABLE_PRIVATE_ADDR (3)
 
 class BLELocalDevice {
 public:
-  BLELocalDevice();
+  BLELocalDevice(HCITransportInterface *HCITransport, uint8_t ownBdaddrType = STATIC_RANDOM_ADDR);
   virtual ~BLELocalDevice();
 
   virtual int begin();
@@ -70,7 +75,7 @@ public:
   virtual int scanForName(String name, bool withDuplicates = false);
   virtual int scanForUuid(String uuid, bool withDuplicates = false);
   virtual int scanForAddress(String address, bool withDuplicates = false);
-  virtual void stopScan();
+  virtual int stopScan();
 
   virtual BLEDevice central();
   virtual BLEDevice available();
@@ -83,6 +88,8 @@ public:
   virtual void setEventHandler(BLEDeviceEvent event, BLEDeviceEventHandler eventHandler);
 
   virtual void setTimeout(unsigned long timeout);
+
+  virtual void getRandomAddress(uint8_t buff[6]);
 
   virtual void debug(Stream& stream);
   virtual void noDebug();
@@ -114,8 +121,11 @@ protected:
   virtual BLEAdvertisingData& getScanResponseData();
 
 private:
+  uint8_t randomAddress[6];
+  HCITransportInterface *_HCITransport;
   BLEAdvertisingData _advertisingData;
   BLEAdvertisingData _scanResponseData;
+  uint8_t _ownBdaddrType;
 };
 
 extern BLELocalDevice& BLE;

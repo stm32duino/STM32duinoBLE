@@ -17,13 +17,18 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#ifndef _ARDUINO_BLE_H_
-#define _ARDUINO_BLE_H_
+#ifndef _STM32DUINO_BLE_H_
+#define _STM32DUINO_BLE_H_
 
 #include "local/BLELocalDevice.h"
 #include "BLEProperty.h"
 #include "BLEStringCharacteristic.h"
 #include "BLETypedCharacteristics.h"
 #include "utility/btct.h"
+
+#if defined(STM32WBxx)
+#include "utility/HCISharedMemTransport.h"
+#endif
+#include "utility/HCISpiTransport.h"
 
 #endif
