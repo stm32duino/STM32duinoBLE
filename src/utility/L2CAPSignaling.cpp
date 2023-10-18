@@ -372,7 +372,7 @@ void L2CAPSignalingClass::smCalculateLTKandConfirm(uint16_t handle, uint8_t expe
   
   HCI.readBdAddr();
   memcpy(&localAddress[1],HCI.localAddr,6);
-  localAddress[0] = 0; // IOT 33 uses a static address // TODO: confirm for Nano BLE
+  localAddress[0] = ATT._ownBdaddrType; // IOT 33 uses a static address // TODO: confirm for Nano BLE
 
   // Compute the LTK and MacKey
   uint8_t MacKey[16];
