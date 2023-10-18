@@ -591,7 +591,7 @@ int HCIClass::tryResolveAddress(uint8_t* BDAddr, uint8_t* address){
   }
   return 0;
 }
-
+/*
 int HCIClass::leRand(uint8_t randomNumber[8])
 {
   int result = sendCommand(OGF_LE_CTL << 10 | OCF_LE_RAND);
@@ -602,8 +602,8 @@ int HCIClass::leRand(uint8_t randomNumber[8])
 
   return result;
 }
-
-int HCIClass::sendAclPkt(uint16_t handle, uint8_t cid, uint8_t plen, void* data)
+*/
+int HCIClass::sendAclPkt(uint16_t handle, uint8_t cid, uint8_t plen, const void* data)
 {
   while (_pendingPkt >= _maxPkt) {
     poll();
@@ -617,7 +617,7 @@ int HCIClass::sendAclPkt(uint16_t handle, uint8_t cid, uint8_t plen, void* data)
     uint16_t cid;
   } aclHdr = { HCI_ACLDATA_PKT, handle, uint8_t(plen + 4), plen, cid };
 
-  uint8_t txBuffer[sizeof(aclHdr) + plen];
+  uint8_t* txBuffer = (uint8_t*)malloc(sizeof(aclHdr) + plen);
   memcpy(txBuffer, &aclHdr, sizeof(aclHdr));
   memcpy(&txBuffer[sizeof(aclHdr)], data, plen);
 
@@ -659,7 +659,7 @@ void HCIClass::noDebug()
   _debug = NULL;
 }
 
-int HCIClass::sendCommand(uint16_t opcode, uint8_t plen, void* parameters)
+int HCIClass::sendCommand(uint16_t opcode, uint8_t plen, const void* parameters)
 {
   struct __attribute__ ((packed)) {
     uint8_t pktType;
@@ -667,7 +667,7 @@ int HCIClass::sendCommand(uint16_t opcode, uint8_t plen, void* parameters)
     uint8_t plen;
   } pktHdr = {HCI_COMMAND_PKT, opcode, plen};
 
-  uint8_t txBuffer[sizeof(pktHdr) + plen];
+  uint8_t* txBuffer = (uint8_t*)malloc(sizeof(pktHdr) + plen);
   memcpy(txBuffer, &pktHdr, sizeof(pktHdr));
   memcpy(&txBuffer[sizeof(pktHdr)], parameters, plen);
 
@@ -815,9 +815,9 @@ void HCIClass::handleEventPkt(uint8_t /*plen*/, uint8_t pdata[])
 
     if (GAP.advertising())
     {
-      HCI.leSetAdvertiseEnable(0x01);
+          HCI.leSetAdvertiseEnable(0x01);
     }
-  }
+      }
   else if (eventHdr->evt == EVT_ENCRYPTION_CHANGE)
   {
     struct __attribute__ ((packed)) EncryptionChange {
@@ -902,9 +902,9 @@ void HCIClass::handleEventPkt(uint8_t /*plen*/, uint8_t pdata[])
     }else{
       ATT.setPeerEncryption(encryptionChange->connectionHandle, PEER_ENCRYPTION::NO_ENCRYPTION);
     }
-  
-    
-  } else if (eventHdr->evt == EVT_CMD_COMPLETE) {
+  }
+  else if (eventHdr->evt == EVT_CMD_COMPLETE)
+  {
     struct __attribute__ ((packed)) CmdComplete {
       uint8_t ncmd;
       uint16_t opcode;
@@ -1239,7 +1239,7 @@ void HCIClass::handleEventPkt(uint8_t /*plen*/, uint8_t pdata[])
 
           // Send the local public key to the remote
           uint16_t connectionHandle = ATT.getPeerEncrptingConnectionHandle();
-          if(connectionHandle>ATT_MAX_PEERS){
+          if(connectionHandle==ATT_MAX_PEERS+1){
 #ifdef _BLE_TRACE_
             Serial.println("failed to find connection handle");
 #endif
@@ -1318,7 +1318,7 @@ void HCIClass::handleEventPkt(uint8_t /*plen*/, uint8_t pdata[])
           Serial.println("DH key generated");
 #endif
           uint16_t connectionHandle = ATT.getPeerEncrptingConnectionHandle();
-          if(connectionHandle>ATT_MAX_PEERS){
+          if(connectionHandle==ATT_MAX_PEERS+1){
 #ifdef _BLE_TRACE_
             Serial.println("Failed to find connection handle DH key check");
 #endif
@@ -1401,7 +1401,13 @@ int HCIClass::leEncrypt(uint8_t* key, uint8_t* plaintext, uint8_t* status, uint8
 #endif
   return res;
 }
-
+int HCIClass::leRand(uint8_t rand[]){
+  int res = sendCommand(OGF_LE_CTL << 10 | LE_COMMAND::RANDOM);
+  if(res == 0){
+    memcpy(rand,_cmdResponse, 8); /// backwards but it's a random number
+  }
+  return res;
+}
 int HCIClass::getLTK(uint8_t* address, uint8_t* LTK){
   if(_getLTK!=0){
     return _getLTK(address, LTK);

@@ -51,11 +51,11 @@ int BLELocalDevice::begin()
     return 0;
   }
 
-  uint8_t randomNumber[8];
-  if (HCI.leRand(randomNumber) != 0) {
+  uint8_t randomNumber[8] = {0x00,0x80,0xe1,0x27,0xa3,0x30,0,0};
+  /*if (HCI.leRand(randomNumber) != 0) {
     end();
     return 0;
-  }
+  }*/
   /* Random address only requires 6 bytes (48 bits)
    * Force both MSB bits to b00 in order to define Static Random Address
    */
@@ -85,11 +85,11 @@ int BLELocalDevice::begin()
     return 0;
   }
 
-  if (HCI.setEventMask(0x3FFFFFFFFFFFFFFF) != 0) {
+  if (HCI.setEventMask(0x2000F0FFFFFFF0FF) != 0) {
     end();
     return 0;
   }
-  if (HCI.setLeEventMask(0x00000000000003FF) != 0) {
+  if (HCI.setLeEventMask(0x0000000000000193) != 0) {
     end();
     return 0;
   }
