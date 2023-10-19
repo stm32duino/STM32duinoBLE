@@ -37,7 +37,7 @@ enum Pairable {
 
 class BLELocalDevice {
 public:
-  BLELocalDevice(HCITransportInterface *HCITransport, uint8_t ownBdaddrType = STATIC_RANDOM_ADDR);
+  BLELocalDevice(HCITransportInterface *HCITransport, uint8_t ownBdaddrType = PUBLIC_ADDR);
   virtual ~BLELocalDevice();
 
   virtual int begin();
