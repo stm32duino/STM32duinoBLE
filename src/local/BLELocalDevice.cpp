@@ -51,15 +51,15 @@ int BLELocalDevice::begin()
     return 0;
   }
 
-  uint8_t randomNumber[8] = {0x00,0x80,0xe1,0x27,0xa3,0x30,0,0};
-  /*if (HCI.leRand(randomNumber) != 0) {
+  uint8_t randomNumber[8];
+  if (HCI.leRand(randomNumber) != 0) {
     end();
     return 0;
-  }*/
+  }
   /* Random address only requires 6 bytes (48 bits)
    * Force both MSB bits to b00 in order to define Static Random Address
    */
-  //randomNumber[5] |= 0xC0;
+  randomNumber[5] |= 0xC0;
 
   // Copy the random address in private variable as it will be sent to the BLE chip
   randomAddress [0] = randomNumber[0];
@@ -68,10 +68,18 @@ int BLELocalDevice::begin()
   randomAddress [3] = randomNumber[3];
   randomAddress [4] = randomNumber[4];
   randomAddress [5] = randomNumber[5];
-
-  if (HCI.leSetRandomAddress((uint8_t*)randomNumber) != 0) {
+  // @note Set Random address only when type is STATIC_RANDOM_ADDR
+  if (HCI.leSetRandomAddress((uint8_t*)randomNumber) != 0 && _ownBdaddrType == STATIC_RANDOM_ADDR) {
     end();
     return 0;
+  }
+  // @note Save address to HCI.localaddress variable, which is used to encryption in pairing
+  if(_ownBdaddrType == PUBLIC_ADDR){
+    HCI.readBdAddr();
+  }else{
+    for(int k=0; k<6; k++){
+      HCI.localAddr[5-k] = randomAddress[k];
+    }
   }
 
   uint8_t hciVer;
@@ -216,7 +224,13 @@ bool BLELocalDevice::disconnect()
 String BLELocalDevice::address() const
 {
   uint8_t addr[6] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-  HCI.readBdAddr(addr);
+  // @note return correct device address when is set to STATIC RANDOM (set by HCI)
+  if(_ownBdaddrType==PUBLIC_ADDR)
+    HCI.readBdAddr(addr);
+  else
+    for(int k=0; k<6; k++){
+        addr[k]=HCI.localAddr[5-k];
+    }
 
   char result[18];
   sprintf(result, "%02x:%02x:%02x:%02x:%02x:%02x", addr[5], addr[4], addr[3], addr[2], addr[1], addr[0]);

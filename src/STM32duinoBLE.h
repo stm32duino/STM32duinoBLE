@@ -31,9 +31,4 @@
 #endif
 #include "utility/HCISpiTransport.h"
 
-#if defined(STM32WBxx)
-#include "utility/HCISharedMemTransport.h"
-#endif
-#include "utility/HCISpiTransport.h"
-
 #endif
