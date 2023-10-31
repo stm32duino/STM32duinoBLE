@@ -22,7 +22,7 @@
 
 #include "GAP.h"
 
-#define GAP_MAX_DISCOVERED_QUEUE_SIZE 32
+#define GAP_MAX_DISCOVERED_QUEUE_SIZE 5
 
 #define GAP_ADV_IND (0x00)
 #define GAP_ADV_SCAN_IND (0x02)
