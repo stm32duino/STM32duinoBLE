@@ -369,10 +369,11 @@ void L2CAPSignalingClass::smCalculateLTKandConfirm(uint16_t handle, uint8_t expe
   uint8_t localAddress[7];
   uint8_t remoteAddress[7];
   ATT.getPeerAddrWithType(handle, remoteAddress);
-  
-  HCI.readBdAddr();
+  // @note Address is taken directly from HCI.localaddress, 
+  //  which is set when object DeviceLocal is created
+  //HCI.readBdAddr();
   memcpy(&localAddress[1],HCI.localAddr,6);
-  localAddress[0] = ATT._ownBdaddrType; // IOT 33 uses a static address // TODO: confirm for Nano BLE
+  localAddress[0] = ATT._ownBdaddrType; //@note Adding bit with address type (e.g. Static random or public address)
 
   // Compute the LTK and MacKey
   uint8_t MacKey[16];
