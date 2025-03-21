@@ -22,6 +22,8 @@
 
 #include "BLEService.h"
 
+extern "C" int strcasecmp(char const *a, char const *b);
+
 BLEService::BLEService() :
   BLEService((BLELocalService*)NULL)
 {
@@ -63,13 +65,20 @@ BLEService::BLEService(const BLEService& other)
   }
 }
 
+void BLEService::clear()
+{
+  if (_local) {
+    _local->clear();
+  }
+}
+
 BLEService::~BLEService()
 {
-  if (_local && _local->release() <= 0) {
+  if (_local && _local->release() == 0) {
     delete _local;
   }
 
-  if (_remote && _remote->release() <= 0) {
+  if (_remote && _remote->release() == 0) {
     delete _remote;
   }
 }

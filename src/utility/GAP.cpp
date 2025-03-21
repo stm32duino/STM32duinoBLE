@@ -22,7 +22,7 @@
 
 #include "GAP.h"
 
-#define GAP_MAX_DISCOVERED_QUEUE_SIZE 5
+#define GAP_MAX_DISCOVERED_QUEUE_SIZE 32
 
 #define GAP_ADV_IND (0x00)
 #define GAP_ADV_SCAN_IND (0x02)
@@ -91,8 +91,14 @@ int GAPClass::scan(bool withDuplicates)
     }
   }
 
-  // active scan, 10 ms scan interval (N * 0.625), 10 ms scan window (N * 0.625), public or static random own address type, no filter
-  if (HCI.leSetScanParameters(0x01, 0x0010, 0x0010, _ownBdaddrType, 0x00) != 0) {
+  // active scan, 20 ms scan interval (N * 0.625), 20 ms scan window (N * 0.625), public own address type, no filter
+  /*
+    Warning (from BLUETOOTH SPECIFICATION 5.x):
+    - scan interval: mandatory range from 0x0012 to 0x1000; only even values are valid
+    - scan window: mandatory range from 0x0011 to 0x1000
+    - The scan window can only be less than or equal to the scan interval
+  */
+  if (HCI.leSetScanParameters(0x01, 0x0020, 0x0020, _ownBdaddrType, 0x00) != 0) {
     return false;
   }
 
@@ -141,6 +147,9 @@ int GAPClass::stopScan()
     }
   }
 
+  _scanNameFilter    = "";
+  _scanUuidFilter    = "";
+  _scanAddressFilter = "";
   _scanning = false;
 
   for (unsigned int i = 0; i < _discoveredDevices.size(); i++) {
@@ -228,8 +237,10 @@ void GAPClass::handleLeAdvertisingReport(uint8_t type, uint8_t addressType, uint
 
   if (discoveredDevice == NULL) {
     if (_discoveredDevices.size() >= GAP_MAX_DISCOVERED_QUEUE_SIZE) {
-      // drop
-      return;
+      BLEDevice* device_first = _discoveredDevices.remove(0);
+      if (device_first != NULL) {
+        delete device_first;
+      }
     }
 
     discoveredDevice = new BLEDevice(addressType, address);

@@ -38,7 +38,7 @@ GATTClass::GATTClass() :
 
 GATTClass::~GATTClass()
 {
-  clearAttributes();
+  end();
 }
 
 void GATTClass::begin()
@@ -70,7 +70,22 @@ void GATTClass::begin()
 
 void GATTClass::end()
 {
-  _attributes.clear();
+  if (_genericAccessService->release() == 0)
+    delete(_genericAccessService);
+  
+  if (_deviceNameCharacteristic->release() == 0)
+    delete(_deviceNameCharacteristic);
+  
+  if (_appearanceCharacteristic->release() == 0)
+    delete(_appearanceCharacteristic);
+  
+  if (_genericAttributeService->release() == 0)
+    delete(_genericAttributeService);
+  
+  if (_servicesChangedCharacteristic->release() == 0)
+    delete(_servicesChangedCharacteristic);
+  
+  clearAttributes();
 }
 
 void GATTClass::setDeviceName(const char* deviceName)
@@ -134,6 +149,7 @@ void GATTClass::addService(BLELocalService* service)
 {
   service->retain();
   _attributes.add(service);
+  _services.add(service);
 
   uint16_t startHandle = attributeCount();
 
@@ -145,6 +161,7 @@ void GATTClass::addService(BLELocalService* service)
     characteristic->setHandle(attributeCount());
     
     // add the characteristic again to make space of the characteristic value handle
+    characteristic->retain();
     _attributes.add(characteristic);
 
     for (unsigned int j = 0; j < characteristic->descriptorCount(); j++) {
@@ -164,12 +181,17 @@ void GATTClass::clearAttributes()
   for (unsigned int i = 0; i < attributeCount(); i++) {
     BLELocalAttribute* a = attribute(i);
 
-    if (a->release() <= 0) {
+    if (a->release() == 0) {
       delete a;
     }
   }
-
   _attributes.clear();
+
+  for (unsigned int i = 0; i < _services.size(); i++) {
+    _services.get(i)->clear();
+  }
+  _services.clear();
+
 }
 
 #if !defined(FAKE_GATT)

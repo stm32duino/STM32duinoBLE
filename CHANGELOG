@@ -1,11 +1,8 @@
-STM32duinoBLE 1.2.0 - 2020.02.17
-* Added support to X-NUCLEO-BNRG2A1
-* Renamed ArduinoBLE as STM32duinoBLE
-* Moved the SPI Transport instance in the application code to improve portability
+ArduinoBLE ?.?.? - ????.??.??
 
 ArduinoBLE 1.1.2 - 2019.11.12
 
-* cordio: switch to lower power when polling with timeout 
+* cordio: switch to lower power when polling with timeout
 * Fixed issue with wrong types for disconnection event handling. Thanks @cparata
 
 ArduinoBLE 1.1.1 - 2019.09.05

@@ -1,0 +1,32 @@
+# Source: https://github.com/per1234/.github/blob/main/workflow-templates/spell-check.md
+name: Spell Check
+
+# See: https://docs.github.com/en/actions/reference/events-that-trigger-workflows
+on:
+  push:
+  pull_request:
+  schedule:
+    # Run every Tuesday at 8 AM UTC to catch new misspelling detections resulting from dictionary updates.
+    - cron: "0 8 * * TUE"
+  workflow_dispatch:
+  repository_dispatch:
+
+jobs:
+  spellcheck:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Spell check
+        uses: codespell-project/actions-codespell@v2
+        with:
+          check_filenames: true
+          check_hidden: true
+          # In the event of a false positive, add the word in all lower case to this file:
+          # ignore_words_file: ./extras/codespell-ignore-words-list.txt
+          skip: src/utility/STM32_WPAN
+          path: src

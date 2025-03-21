@@ -1,24 +1,14 @@
 /*
   SensorTag Button
 
-  This example scans for BLE peripherals until a TI SensorTag is discovered.
+  This example scans for Bluetooth® Low Energy peripherals until a TI SensorTag is discovered.
   It then connects to it, discovers the attributes of the 0xffe0 service,
   subscribes to the Simple Key Characteristic (UUID 0xffe1). When a button is
   pressed on the SensorTag a notification is received and the button state is
   outputted to the Serial Monitor when one is pressed.
 
   The circuit:
-  - Boards with integrated BLE or Nucleo board plus one of BLE X-Nucleo shield::
-    - B-L475E-IOT01A1
-    - B_L4S5I_IOT01A
-    - STEVAL-MKBOXPRO
-    - STEVAL-MKSBOX1V1,
-    - NUCLEO-WB15CC
-    - P-NUCLEO-WB55RG
-    - STM32WB5MM-DK
-    - X-NUCLEO-IDB05A2
-    - X-NUCLEO-IDB05A1
-    - X-NUCLEO-BNRG2A1
+  - Board with supported BLE modules.
   - TI SensorTag
 
   This example code is in the public domain.
@@ -26,94 +16,18 @@
 
 #include <STM32duinoBLE.h>
 
-#if defined(ARDUINO_STEVAL_MKBOXPRO)
-/* STEVAL-MKBOXPRO */
-SPIClass SpiHCI(PA7, PA6, PA5);
-HCISpiTransportClass HCISpiTransport(SpiHCI, BLUENRG_LP, PA2, PB11, PD4, 1000000, SPI_MODE3);
-#if !defined(FAKE_BLELOCALDEVICE)
-BLELocalDevice BLEObj(&HCISpiTransport);
-BLELocalDevice& BLE = BLEObj;
-#endif
-#elif defined(ARDUINO_STEVAL_MKSBOX1V1)
-/* STEVAL-MKSBOX1V1 */
-SPIClass SpiHCI(PC3, PD3, PD1);
-HCISpiTransportClass HCISpiTransport(SpiHCI, SPBTLE_1S, PD0, PD4, PA8, 1000000, SPI_MODE1);
-#if !defined(FAKE_BLELOCALDEVICE)
-BLELocalDevice BLEObj(&HCISpiTransport);
-BLELocalDevice& BLE = BLEObj;
-#endif
-#elif defined(ARDUINO_B_L475E_IOT01A) || defined(ARDUINO_B_L4S5I_IOT01A)
-/* B-L475E-IOT01A1 or B_L4S5I_IOT01A */
-SPIClass SpiHCI(PC12, PC11, PC10);
-HCISpiTransportClass HCISpiTransport(SpiHCI, SPBTLE_RF, PD13, PE6, PA8, 8000000, SPI_MODE0);
-#if !defined(FAKE_BLELOCALDEVICE)
-BLELocalDevice BLEObj(&HCISpiTransport);
-BLELocalDevice& BLE = BLEObj;
-#endif
-#elif defined(ARDUINO_NUCLEO_WB15CC) || defined(ARDUINO_P_NUCLEO_WB55RG) ||\
-      defined(ARDUINO_STM32WB5MM_DK) || defined(ARDUINO_P_NUCLEO_WB55_USB_DONGLE)
-HCISharedMemTransportClass HCISharedMemTransport;
-#if !defined(FAKE_BLELOCALDEVICE)
-BLELocalDevice BLEObj(&HCISharedMemTransport);
-BLELocalDevice& BLE = BLEObj;
-#endif
-#else
-/* Shield IDB05A2 with SPI clock on D3 */
-SPIClass SpiHCI(D11, D12, D3);
-HCISpiTransportClass HCISpiTransport(SpiHCI, BLUENRG_M0, A1, A0, D7, 8000000, SPI_MODE0);
-#if !defined(FAKE_BLELOCALDEVICE)
-BLELocalDevice BLEObj(&HCISpiTransport);
-BLELocalDevice& BLE = BLEObj;
-#endif
-/* Shield IDB05A2 with SPI clock on D13 */
-// #define SpiHCI SPI
-// HCISpiTransportClass HCISpiTransport(SpiHCI, BLUENRG_M0, A1, A0, D7, 8000000, SPI_MODE0);
-// #if !defined(FAKE_BLELOCALDEVICE)
-// BLELocalDevice BLEObj(&HCISpiTransport);
-// BLELocalDevice& BLE = BLEObj;
-// #endif
-/* Shield IDB05A1 with SPI clock on D3 */
-// SPIClass SpiHCI(D11, D12, D3);
-// HCISpiTransportClass HCISpiTransport(SpiHCI, SPBTLE_RF, A1, A0, D7, 8000000, SPI_MODE0);
-// #if !defined(FAKE_BLELOCALDEVICE)
-// BLELocalDevice BLEObj(&HCISpiTransport);
-// BLELocalDevice& BLE = BLEObj;
-// #endif
-/* Shield IDB05A1 with SPI clock on D13 */
-// #define SpiHCI SPI
-// HCISpiTransportClass HCISpiTransport(SpiHCI, SPBTLE_RF, A1, A0, D7, 8000000, SPI_MODE0);
-// #if !defined(FAKE_BLELOCALDEVICE)
-// BLELocalDevice BLEObj(&HCISpiTransport);
-// BLELocalDevice& BLE = BLEObj;
-// #endif
-/* Shield BNRG2A1 with SPI clock on D3 */
-// SPIClass SpiHCI(D11, D12, D3);
-// HCISpiTransportClass HCISpiTransport(SpiHCI, BLUENRG_M2SP, A1, A0, D7, 1000000, SPI_MODE1);
-// #if !defined(FAKE_BLELOCALDEVICE)
-// BLELocalDevice BLEObj(&HCISpiTransport);
-// BLELocalDevice& BLE = BLEObj;
-// #endif
-/* Shield BNRG2A1 with SPI clock on D13 */
-// #define SpiHCI SPI
-// HCISpiTransportClass HCISpiTransport(SpiHCI, BLUENRG_M2SP, A1, A0, D7, 1000000, SPI_MODE1);
-// #if !defined(FAKE_BLELOCALDEVICE)
-// BLELocalDevice BLEObj(&HCISpiTransport);
-// BLELocalDevice& BLE = BLEObj;
-// #endif
-#endif
-
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(9600);
   while (!Serial);
 
   // begin initialization
   if (!BLE.begin()) {
-    Serial.println("starting BLE failed!");
+    Serial.println("starting Bluetooth® Low Energy module failed!");
 
     while (1);
   }
 
-  Serial.println("BLE Central - SensorTag button");
+  Serial.println("Bluetooth® Low Energy Central - SensorTag button");
   Serial.println("Make sure to turn on the device.");
 
   // start scanning for peripherals
