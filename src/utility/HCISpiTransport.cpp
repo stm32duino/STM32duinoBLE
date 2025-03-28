@@ -17,7 +17,55 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+#if !defined(STM32WBxx) || defined(USE_BLE_SPI)
 #include "HCISpiTransport.h"
+
+#if defined(CUSTOM_BLE_SPI)
+SPIClass SpiHCI(BLE_SPI_MOSI, BLE_SPI_MISO, BLE_SPI_CLK);
+HCISpiTransportClass HCISpiTransport(SpiHCI, BLE_CHIP_TYPE, BLE_SPI_CS, BLE_SPI_IRQ, BLE_RESET, BLE_SPI_FREQ, BLE_SPI_MODE);
+#elif defined(ARDUINO_STEVAL_MKBOXPRO)
+/* STEVAL-MKBOXPRO */
+SPIClass SpiHCI(PA7, PA6, PA5);
+HCISpiTransportClass HCISpiTransport(SpiHCI, BLUENRG_LP, PA2, PB11, PD4, 1000000, SPI_MODE3);
+#elif defined(ARDUINO_STEVAL_MKSBOX1V1)
+/* STEVAL-MKSBOX1V1 */
+SPIClass SpiHCI(PC3, PD3, PD1);
+HCISpiTransportClass HCISpiTransport(SpiHCI, SPBTLE_1S, PD0, PD4, PA8, 1000000, SPI_MODE1);
+#elif defined(ARDUINO_B_L475E_IOT01A) || defined(ARDUINO_B_L4S5I_IOT01A)
+/* B-L475E-IOT01A1 or B_L4S5I_IOT01A */
+SPIClass SpiHCI(PC12, PC11, PC10);
+HCISpiTransportClass HCISpiTransport(SpiHCI, SPBTLE_RF, PD13, PE6, PA8, 8000000, SPI_MODE0);
+#elif defined(ARDUINO_STM32L562E_DK)
+/* STM32L562E-DK */
+SPIClass SpiHCI(PG4, PG3, PG2);
+HCISpiTransportClass HCISpiTransport(SpiHCI, BLUENRG_M0, PG5, PG6, PG8, 8000000, SPI_MODE0);
+#elif defined(IDB05A2_SPI_CLOCK_D3)
+/* Shield IDB05A2 with SPI clock on D3 */
+SPIClass SpiHCI(D11, D12, D3);
+HCISpiTransportClass HCISpiTransport(SpiHCI, BLUENRG_M0, A1, A0, D7, 8000000, SPI_MODE0);
+#elif defined(IDB05A2_SPI_CLOCK_D13)
+/* Shield IDB05A2 with SPI clock on D13 */
+#define SpiHCI SPI
+HCISpiTransportClass HCISpiTransport(SpiHCI, BLUENRG_M0, A1, A0, D7, 8000000, SPI_MODE0);
+#elif defined(IDB05A1_SPI_CLOCK_D3)
+/* Shield IDB05A1 with SPI clock on D3 */
+SPIClass SpiHCI(D11, D12, D3);
+HCISpiTransportClass HCISpiTransport(SpiHCI, SPBTLE_RF, A1, A0, D7, 8000000, SPI_MODE0);
+#elif defined(IDB05A1_SPI_CLOCK_D13)
+/* Shield IDB05A1 with SPI clock on D13 */
+#define SpiHCI SPI
+HCISpiTransportClass HCISpiTransport(SpiHCI, SPBTLE_RF, A1, A0, D7, 8000000, SPI_MODE0);
+#elif defined(BNRG2A1_SPI_CLOCK_D3)
+/* Shield BNRG2A1 with SPI clock on D3 */
+SPIClass SpiHCI(D11, D12, D3);
+HCISpiTransportClass HCISpiTransport(SpiHCI, BLUENRG_M2SP, A1, A0, D7, 1000000, SPI_MODE1);
+#elif defined(BNRG2A1_SPI_CLOCK_D13)
+/* Shield BNRG2A1 with SPI clock on D13 */
+#define SpiHCI SPI
+HCISpiTransportClass HCISpiTransport(SpiHCI, BLUENRG_M2SP, A1, A0, D7, 1000000, SPI_MODE1);
+#else
+#error "Unsupported board or shield selected!"
+#endif
 
 volatile int data_avail = 0;
 
@@ -1351,3 +1399,6 @@ void HCISpiTransportClass::wait_for_set_address()
     }
   } while (!status);
 }
+
+HCITransportInterface& HCITransport = HCISpiTransport;
+#endif // !STM32WBxx || USE_BLE_SPI

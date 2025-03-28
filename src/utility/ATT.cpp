@@ -34,6 +34,8 @@
 
 #include "ATT.h"
 
+extern "C" int strcasecmp(char const *a, char const *b);
+
 #define ATT_OP_ERROR              0x01
 #define ATT_OP_MTU_REQ            0x02
 #define ATT_OP_MTU_RESP           0x03
@@ -81,6 +83,8 @@
 #define ATT_ECODE_UNSUPP_GRP_TYPE      0x10
 #define ATT_ECODE_INSUFF_RESOURCES     0x11
 
+// #define _BLE_TRACE_
+
 ATTClass::ATTClass() :
   _maxMtu(23),
   _timeout(5000),
@@ -95,6 +99,7 @@ ATTClass::ATTClass() :
     memset(_peers[i].address, 0x00, sizeof(_peers[i].address));
     _peers[i].mtu = 23;
     _peers[i].device = NULL;
+    _peers[i].encryption = 0x0;
   }
 
   memset(_eventHandlers, 0x00, sizeof(_eventHandlers));
@@ -252,6 +257,18 @@ void ATTClass::addConnection(uint16_t handle, uint8_t role, uint8_t peerBdaddrTy
   _peers[peerIndex].mtu = 23;
   _peers[peerIndex].addressType = peerBdaddrType;
   memcpy(_peers[peerIndex].address, peerBdaddr, sizeof(_peers[peerIndex].address));
+  uint8_t BDADDr[6];
+  for(int i=0; i<6; i++) BDADDr[5-i] = peerBdaddr[i];
+  if(HCI.tryResolveAddress(BDADDr,_peers[peerIndex].resolvedAddress)){
+#ifdef _BLE_TRACE_
+    Serial.println("Found match.");
+#endif
+  }else{
+#ifdef _BLE_TRACE_
+    Serial.println("No matching MAC");
+#endif
+    memset(&_peers[peerIndex].resolvedAddress, 0, 6);
+  }
 
   if (_eventHandlers[BLEConnected]) {
     _eventHandlers[BLEConnected](BLEDevice(peerBdaddrType, peerBdaddr));
@@ -267,12 +284,24 @@ void ATTClass::handleData(uint16_t connectionHandle, uint8_t dlen, uint8_t data[
 
   uint16_t mtu = this->mtu(connectionHandle);
 
+#ifdef _BLE_TRACE_
+  Serial.print("data opcode: 0x");
+  Serial.println(opcode, HEX);
+#endif
   switch (opcode) {
     case ATT_OP_ERROR:
+#ifdef _BLE_TRACE_
+      Serial.println("[Info] data error");
+      // Serial.print("Error: ");
+      // btct.printBytes(data, dlen);
+#endif
       error(connectionHandle, dlen, data);
       break;
 
     case ATT_OP_MTU_REQ:
+#ifdef _BLE_TRACE_
+      Serial.println("MTU");
+#endif
       mtuReq(connectionHandle, dlen, data);
       break;
 
@@ -281,6 +310,9 @@ void ATTClass::handleData(uint16_t connectionHandle, uint8_t dlen, uint8_t data[
       break;
 
     case ATT_OP_FIND_INFO_REQ:
+#ifdef _BLE_TRACE_
+      Serial.println("Find info");
+#endif
       findInfoReq(connectionHandle, mtu, dlen, data);
       break;
 
@@ -293,6 +325,9 @@ void ATTClass::handleData(uint16_t connectionHandle, uint8_t dlen, uint8_t data[
       break;
 
     case ATT_OP_READ_BY_TYPE_REQ:
+#ifdef _BLE_TRACE_
+      Serial.println("By type");
+#endif
       readByTypeReq(connectionHandle, mtu, dlen, data);
       break;
 
@@ -319,6 +354,9 @@ void ATTClass::handleData(uint16_t connectionHandle, uint8_t dlen, uint8_t data[
 
     case ATT_OP_WRITE_REQ:
     case ATT_OP_WRITE_CMD:
+#ifdef _BLE_TRACE_
+      Serial.println("Write req");
+#endif
       writeReqOrCmd(connectionHandle, mtu, opcode, dlen, data);
       break;
 
@@ -346,6 +384,9 @@ void ATTClass::handleData(uint16_t connectionHandle, uint8_t dlen, uint8_t data[
     case ATT_OP_READ_MULTI_REQ:
     case ATT_OP_SIGNED_WRITE_CMD:
     default:
+#ifdef _BLE_TRACE_
+      Serial.println("[Info] Unhandled dara");
+#endif
       sendError(connectionHandle, opcode, 0x00, ATT_ECODE_REQ_NOT_SUPP);
       break;
   }
@@ -398,6 +439,10 @@ void ATTClass::removeConnection(uint16_t handle, uint8_t /*reason*/)
   _peers[peerIndex].addressType = 0x00;
   memset(_peers[peerIndex].address, 0x00, sizeof(_peers[peerIndex].address));
   _peers[peerIndex].mtu = 23;
+  _peers[peerIndex].encryption = PEER_ENCRYPTION::NO_ENCRYPTION;
+  _peers[peerIndex].IOCap[0] = 0;
+  _peers[peerIndex].IOCap[1] = 0;
+  _peers[peerIndex].IOCap[2] = 0;
 
   if (_peers[peerIndex].device) {
     delete _peers[peerIndex].device;
@@ -456,6 +501,32 @@ bool ATTClass::connected(uint16_t handle) const
   return false;
 }
 
+/*
+ * Return true if any of the known devices is paired (peer encrypted)
+ * Does not check if the paired device is also connected
+ */
+bool ATTClass::paired() const
+{
+  for(int i=0; i<ATT_MAX_PEERS; i++){
+    if((_peers[i].encryption & PEER_ENCRYPTION::ENCRYPTED_AES) > 0){
+      return true;
+    }
+  }
+  return false;
+}
+
+/*
+ * Return true if the specified device is paired (peer encrypted)
+ */
+bool ATTClass::paired(uint16_t handle) const
+{  
+  for(int i=0; i<ATT_MAX_PEERS; i++){
+    if(_peers[i].connectionHandle != handle){continue;}
+    return (_peers[i].encryption & PEER_ENCRYPTION::ENCRYPTED_AES) > 0;
+  }
+  return false; // unknown handle
+}
+
 uint16_t ATTClass::mtu(uint16_t handle) const
 {
   for (int i = 0; i < ATT_MAX_PEERS; i++) {
@@ -486,6 +557,7 @@ bool ATTClass::disconnect()
     _peers[i].role = 0x00;
     _peers[i].addressType = 0x00;
     memset(_peers[i].address, 0x00, sizeof(_peers[i].address));
+    memset(_peers[i].resolvedAddress, 0x00, sizeof(_peers[i].resolvedAddress));
     _peers[i].mtu = 23;
 
     if (_peers[i].device) {
@@ -532,6 +604,7 @@ bool ATTClass::handleNotify(uint16_t handle, const uint8_t* value, int length)
     memcpy(&notification[notificationLength], value, length);
     notificationLength += length;
 
+    /// TODO: Set encryption requirement on notify.
     HCI.sendAclPkt(_peers[i].connectionHandle, ATT_CID, notificationLength, notification);
 
     numNotifications++;
@@ -808,6 +881,14 @@ void ATTClass::readByGroupReq(uint16_t connectionHandle, uint16_t mtu, uint8_t d
     uint16_t endHandle;
     uint16_t uuid;
   } *readByGroupReq = (ReadByGroupReq*)data;
+#ifdef _BLE_TRACE_
+  Serial.print("readByGroupReq: start: 0x");
+  Serial.println(readByGroupReq->startHandle,HEX);
+  Serial.print("readByGroupReq: end: 0x");
+  Serial.println(readByGroupReq->endHandle,HEX);
+  Serial.print("readByGroupReq: UUID: 0x");
+  Serial.println(readByGroupReq->uuid,HEX);
+#endif
 
   if (dlen != sizeof(ReadByGroupReq) || (readByGroupReq->uuid != BLETypeService && readByGroupReq->uuid != 0x2801)) {
     sendError(connectionHandle, ATT_OP_READ_BY_GROUP_REQ, readByGroupReq->startHandle, ATT_ECODE_UNSUPP_GRP_TYPE);
@@ -820,7 +901,10 @@ void ATTClass::readByGroupReq(uint16_t connectionHandle, uint16_t mtu, uint8_t d
   response[0] = ATT_OP_READ_BY_GROUP_RESP;
   response[1] = 0x00;
   responseLength = 2;
-
+#ifdef _BLE_TRACE_
+  Serial.print("readByGroupReq: attrcount: ");
+  Serial.println(GATT.attributeCount());
+#endif
   for (uint16_t i = (readByGroupReq->startHandle - 1); i < GATT.attributeCount() && i <= (readByGroupReq->endHandle - 1); i++) {
     BLELocalAttribute* attribute = GATT.attribute(i);
 
@@ -907,8 +991,10 @@ void ATTClass::readOrReadBlobReq(uint16_t connectionHandle, uint16_t mtu, uint8_
       return;
     }
   }
-
-  uint16_t handle = *(uint16_t*)data;
+  /// if auth error, hold the response in a buffer.
+  bool holdResponse = false;
+  uint16_t handle;
+  memcpy(&handle, data, sizeof(handle));
   uint16_t offset = (opcode == ATT_OP_READ_REQ) ? 0 : *(uint16_t*)&data[sizeof(handle)];
 
   if ((uint16_t)(handle - 1) > GATT.attributeCount()) {
@@ -963,6 +1049,12 @@ void ATTClass::readOrReadBlobReq(uint16_t connectionHandle, uint16_t mtu, uint8_
         sendError(connectionHandle, opcode, handle, ATT_ECODE_READ_NOT_PERM);
         return;
       }
+      // If characteristic requires encryption send error & hold response until encrypted
+      if ((characteristic->permissions() & (BLEPermission::BLEEncryption >> 8)) > 0 &&
+          (getPeerEncryption(connectionHandle) & PEER_ENCRYPTION::ENCRYPTED_AES)==0 ) {
+        holdResponse = true;
+        sendError(connectionHandle, opcode, handle, ATT_ECODE_INSUFF_ENC);
+      }
 
       uint16_t valueLength = characteristic->valueLength();
 
@@ -995,8 +1087,12 @@ void ATTClass::readOrReadBlobReq(uint16_t connectionHandle, uint16_t mtu, uint8_
     memcpy(&response[responseLength], descriptor->value() + offset, valueLength);
     responseLength += valueLength;
   }
-  
-  HCI.sendAclPkt(connectionHandle, ATT_CID, responseLength, response);
+  if(holdResponse){
+    memcpy(holdBuffer, response, responseLength);
+    holdBufferSize = responseLength;
+  }else{
+    HCI.sendAclPkt(connectionHandle, ATT_CID, responseLength, response);
+  }
 }
 
 void ATTClass::readResp(uint16_t connectionHandle, uint8_t dlen, uint8_t data[])
@@ -1152,7 +1248,8 @@ void ATTClass::writeReqOrCmd(uint16_t connectionHandle, uint16_t mtu, uint8_t op
     return;
   }
 
-  uint16_t handle = *(uint16_t*)data;
+  uint16_t handle;
+  memcpy(&handle, data, sizeof(handle));
 
   if ((uint16_t)(handle - 1) > GATT.attributeCount()) {
     if (withResponse) {
@@ -1165,6 +1262,7 @@ void ATTClass::writeReqOrCmd(uint16_t connectionHandle, uint16_t mtu, uint8_t op
   uint8_t* value = &data[sizeof(handle)];
 
   BLELocalAttribute* attribute = GATT.attribute(handle - 1);
+  bool holdResponse = false;
 
   if (attribute->type() == BLETypeCharacteristic) {
     BLELocalCharacteristic* characteristic = (BLELocalCharacteristic*)attribute;
@@ -1177,10 +1275,34 @@ void ATTClass::writeReqOrCmd(uint16_t connectionHandle, uint16_t mtu, uint8_t op
       }
       return;
     }
+    // Check permission
+    if((characteristic->permissions() &( BLEPermission::BLEEncryption >> 8)) > 0 && 
+       (getPeerEncryption(connectionHandle) & PEER_ENCRYPTION::ENCRYPTED_AES) == 0){
+      holdResponse = true;
+      sendError(connectionHandle, ATT_OP_WRITE_REQ, handle, ATT_ECODE_INSUFF_ENC);
+    }
 
     for (int i = 0; i < ATT_MAX_PEERS; i++) {
       if (_peers[i].connectionHandle == connectionHandle) {
-        characteristic->writeValue(BLEDevice(_peers[i].addressType, _peers[i].address), value, valueLength);
+        if(holdResponse){
+          
+          writeBufferSize = 0;
+          memcpy(writeBuffer, &handle, 2);
+          writeBufferSize+=2;
+
+          writeBuffer[writeBufferSize++] = _peers[i].addressType;
+
+          memcpy(&writeBuffer[writeBufferSize], _peers[i].address, sizeof(_peers[i].address));
+          writeBufferSize += sizeof(_peers[i].address);
+          
+          writeBuffer[writeBufferSize] = valueLength;
+          writeBufferSize += sizeof(valueLength);
+
+          memcpy(&writeBuffer[writeBufferSize], value, valueLength);
+          writeBufferSize += valueLength;
+        }else{
+          characteristic->writeValue(BLEDevice(_peers[i].addressType, _peers[i].address), value, valueLength);
+        }
         break;
       }
     }
@@ -1227,8 +1349,36 @@ void ATTClass::writeReqOrCmd(uint16_t connectionHandle, uint16_t mtu, uint8_t op
     response[0] = ATT_OP_WRITE_RESP;
     responseLength = 1;
 
-    HCI.sendAclPkt(connectionHandle, ATT_CID, responseLength, response);
+    if(holdResponse){
+      memcpy(holdBuffer, response, responseLength);
+      holdBufferSize = responseLength;
+    }else{
+      HCI.sendAclPkt(connectionHandle, ATT_CID, responseLength, response);
+    }
   }
+}
+int ATTClass::processWriteBuffer(){
+  if(writeBufferSize==0){
+    return 0;
+  }
+
+  struct __attribute__ ((packed)) WriteBuffer {
+    uint16_t handle;
+    uint8_t addressType;
+    uint8_t address[6];
+    uint8_t valueLength;
+    uint8_t value[];
+  } *writeBufferStruct = (WriteBuffer*)&ATT.writeBuffer;
+  // uint8_t value[writeBufferStruct->valueLength];
+  // memcpy(value, writeBufferStruct->value, writeBufferStruct->valueLength);
+  BLELocalAttribute* attribute = GATT.attribute(writeBufferStruct->handle-1);
+  BLELocalCharacteristic* characteristic = (BLELocalCharacteristic*)attribute;
+#ifdef _BLE_TRACE_
+  Serial.println("Writing value");
+#endif
+  characteristic->writeValue(BLEDevice(writeBufferStruct->addressType, writeBufferStruct->address), writeBufferStruct->value, writeBufferStruct->valueLength);
+  writeBufferSize = 0;
+  return 1;
 }
 
 void ATTClass::writeResp(uint16_t connectionHandle, uint8_t dlen, uint8_t data[])
@@ -1359,14 +1509,14 @@ void ATTClass::handleNotifyOrInd(uint16_t connectionHandle, uint8_t opcode, uint
     uint16_t handle;
   } *handleNotifyOrInd = (HandleNotifyOrInd*)data;
 
-  uint8_t handle = handleNotifyOrInd->handle;
+  uint16_t handle = handleNotifyOrInd->handle;
 
-  for (int i = 0; i < ATT_MAX_PEERS; i++) {
-    if (_peers[i].connectionHandle != connectionHandle) {
+  for (int peer = 0; peer < ATT_MAX_PEERS; peer++) {
+    if (_peers[peer].connectionHandle != connectionHandle) {
       continue;
     }
 
-    BLERemoteDevice* device = _peers[i].device;
+    BLERemoteDevice* device = _peers[peer].device;
 
     if (!device) {
       break;
@@ -1384,7 +1534,7 @@ void ATTClass::handleNotifyOrInd(uint16_t connectionHandle, uint8_t opcode, uint
           BLERemoteCharacteristic* c = s->characteristic(j);
 
           if (c->valueHandle() == handle) {
-            c->writeValue(BLEDevice(_peers[i].addressType, _peers[i].address), &data[2], dlen - 2);
+            c->writeValue(BLEDevice(_peers[peer].addressType, _peers[peer].address), &data[2], dlen - 2);
           }
         }
 
@@ -1579,8 +1729,19 @@ bool ATTClass::discoverDescriptors(uint16_t connectionHandle, BLERemoteDevice* d
         }
 
         if (responseBuffer[0] == ATT_OP_FIND_INFO_RESP) {
-          uint16_t lengthPerDescriptor = responseBuffer[1] * 4;
-          uint8_t uuidLen = 2;
+          //
+          // Format parameter (responseBuffer[1]) either 0x01 - 16-bit Bluetooth UUID(s), or 0x02 - 128 bit UUID(s)
+          //
+          // Therefore for:
+          //   0x01 - uuidLen = 2 (octets)
+          //          lengthPerDescriptor = 4 (Handle 2 octets + UUID 2 octets)
+          //   0x02 - uuidLen = 16 (octets)
+          //          lengthPerDescriptor = 18 (Handle 2 octets + UUID 16 octets)
+          //
+          // See section 3.4.3.2 ATT_FIND_INFORMATION_RSP of Bluetooth Core Specification 5.3.
+          //
+          uint16_t lengthPerDescriptor = responseBuffer[1] * 14 - 10;
+          uint8_t uuidLen = lengthPerDescriptor - 2;
 
           for (int i = 2; i < respLength; i += lengthPerDescriptor) {
             struct __attribute__ ((packed)) RawDescriptor {
@@ -1688,9 +1849,117 @@ void ATTClass::writeCmd(uint16_t connectionHandle, uint16_t handle, const uint8_
   sendReq(connectionHandle, &writeReq, 3 + dataLen, NULL);
 }
 
+// Set encryption state for a peer
+int ATTClass::setPeerEncryption(uint16_t connectionHandle, uint8_t encryption){
+  for(int i=0; i<ATT_MAX_PEERS; i++){
+    if(_peers[i].connectionHandle != connectionHandle){
+      continue;
+    }
+    _peers[i].encryption = encryption;
+    return 1;
+  }
+  return 0;
+}
+// Set the IO capabilities for a peer
+int ATTClass::setPeerIOCap(uint16_t connectionHandle, uint8_t IOCap[3]){
+  for(int i=0; i<ATT_MAX_PEERS; i++){
+    if(_peers[i].connectionHandle != connectionHandle){
+      continue;
+    }
+    memcpy(_peers[i].IOCap, IOCap, 3);
+    return 1;
+  }
+  return 0;
+}
+// Return the connection handle for the first peer that is requesting encryption
+uint16_t ATTClass::getPeerEncrptingConnectionHandle(){
+  for(int i=0; i<ATT_MAX_PEERS; i++){
+    if((_peers[i].encryption & PEER_ENCRYPTION::REQUESTED_ENCRYPTION) > 0){
+      return _peers[i].connectionHandle;
+    }
+  }
+  return ATT_MAX_PEERS + 1;
+}
+// Get the encryption state for a particular peer / connection handle
+uint8_t ATTClass::getPeerEncryption(uint16_t connectionHandle) {
+  for(int i=0; i<ATT_MAX_PEERS; i++){
+    if(_peers[i].connectionHandle != connectionHandle){continue;}
+    return _peers[i].encryption;
+  }
+  return 0;
+}
+// Get the IOCapabilities for a peer
+int ATTClass::getPeerIOCap(uint16_t connectionHandle, uint8_t IOCap[3]) {
+  for(int i=0; i<ATT_MAX_PEERS; i++){
+    if(_peers[i].connectionHandle != connectionHandle){continue;}
+    // return _peers[i].encryption;
+    memcpy(IOCap, _peers[i].IOCap, 3);
+  }
+  return 0;
+}
+// Get the BD_ADDR for a peer
+int ATTClass::getPeerAddr(uint16_t connectionHandle, uint8_t peerAddr[])
+{
+  for(int i=0; i<ATT_MAX_PEERS; i++)
+  {
+    if(_peers[i].connectionHandle != connectionHandle){continue;}
+    memcpy(peerAddr, _peers[i].address,6);
+    return 1;
+  }
+  return 0;
+}
+// Get the BD_ADDR for a peer in the format needed by f6 for pairing.
+int ATTClass::getPeerAddrWithType(uint16_t connectionHandle, uint8_t peerAddr[])
+{
+  for(int i=0; i<ATT_MAX_PEERS; i++)
+  {
+    if(_peers[i].connectionHandle != connectionHandle){continue;}
+    for(int k=0; k<6; k++){
+      peerAddr[6-k] = _peers[i].address[k];
+    }
+    if(_peers[i].addressType){
+      peerAddr[0] = _peers[i].addressType;
+    }else{
+      peerAddr[0] = 0x00;
+    }
+    return 1;
+  }
+  return 0;
+}
+// Get the resolved address for a peer if it exists
+int ATTClass::getPeerResolvedAddress(uint16_t connectionHandle, uint8_t resolvedAddress[]){
+  for(int i=0; i<ATT_MAX_PEERS; i++)
+  {
+    if(_peers[i].connectionHandle != connectionHandle){continue;}
+
+    bool allZero=true;
+    for(int k=0; k<6; k++){
+      if(_peers[i].resolvedAddress[k] == 0){
+        continue;
+      }else{
+        allZero = false;
+        break;
+      }
+    }
+
+    if(allZero){
+      return 0;
+    }
+
+    memcpy(resolvedAddress, _peers[i].resolvedAddress, 6);
+    return 1;
+  }
+  return 0;
+}
+
 void ATTClass::setOwnBdaddrType(uint8_t ownBdaddrType)
 {
   _ownBdaddrType = ownBdaddrType;
+}
+
+uint8_t ATTClass::getOwnBdaddrType(void)
+{
+  return _ownBdaddrType;
 }
 
 #if !defined(FAKE_ATT)

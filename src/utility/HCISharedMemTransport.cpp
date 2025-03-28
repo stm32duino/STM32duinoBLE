@@ -16,11 +16,18 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
-#if defined(STM32WBxx)
+#if defined(STM32WBxx) && !defined(USE_BLE_SPI)
 
 #include "HCISharedMemTransport.h"
 #include "STM32_WPAN/hw.h"
 #include "otp.h"
+
+#if defined(ARDUINO_NUCLEO_WB15CC) || defined(ARDUINO_P_NUCLEO_WB55RG) ||\
+      defined(ARDUINO_STM32WB5MM_DK) || defined(ARDUINO_P_NUCLEO_WB55_USB_DONGLE)
+HCISharedMemTransportClass HCISharedMemTransport;
+#else
+#error "Unsupported board or shield selected!"
+#endif
 
 /* Private variables ---------------------------------------------------------*/
 PLACE_IN_SECTION("MB_MEM1") ALIGN(4) static TL_CmdPacket_t BleCmdBuffer;
@@ -57,7 +64,7 @@ static uint8_t bd_addr_udn[CONFIG_DATA_PUBADDR_LEN];
 
 /* Private functions ---------------------------------------------------------*/
 /**
- * TL Mailbox synchronisation means
+ * TL Mailbox synchronization means
  */
 
 /*  returns true if sys_event was received, false otherwise */
@@ -413,7 +420,7 @@ int HCISharedMemTransportClass::begin()
 
   /*  Check whether M0 sub-system was started already by
    *  checking if the system event was already received
-   *  before. If it was not, then go thru all init. */
+   *  before. If it was not, then go through all init. */
   if (!sysevt_check()) {
     start_ble_rf();
     init_debug();
@@ -422,7 +429,7 @@ int HCISharedMemTransportClass::begin()
     /* "C2 unlocking" */
     transport_init();
     /*  At this stage, we got the ready event,
-     *  passed thru TL_SYS_EvtReceived */
+     *  passed through TL_SYS_EvtReceived */
 
     WirelessFwInfo_t wireless_info_instance;
     WirelessFwInfo_t *p_wireless_info = &wireless_info_instance;
@@ -698,7 +705,7 @@ void HCISharedMemTransportClass::transport_init(void)
   TL_Enable();
 
   /*  At this stage, we'll need to wait for ready event,
-   *  passed thru TL_SYS_EvtReceived */
+   *  passed through TL_SYS_EvtReceived */
   if (!sysevt_wait()) {
 #if defined(PRINT_IPCC_INFO)
     printf("ERROR booting WB controller\r\n");
@@ -771,4 +778,5 @@ int HCISharedMemTransportClass::bt_ipm_set_power(void)
   return 1; /* success */
 }
 
-#endif /* STM32WBxx */
+HCITransportInterface& HCITransport = HCISharedMemTransport;
+#endif /* STM32WBxx && !USE_BLE_SPI */

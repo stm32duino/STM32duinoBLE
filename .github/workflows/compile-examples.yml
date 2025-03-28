@@ -1,10 +1,21 @@
 name: Compile Examples
+
+# See: https://docs.github.com/en/free-pro-team@latest/actions/reference/events-that-trigger-workflows
 on:
-  - push
-  - pull_request
+  push:
+    paths:
+      - ".github/workflows/compile-examples.yml"
+      - "examples/**"
+      - "src/**"
+  pull_request:
+    paths:
+      - ".github/workflows/compile-examples.yml"
+      - "examples/**"
+      - "src/**"
+  workflow_dispatch:
 
 jobs:
-  build:
+  build-for-stm32:
     runs-on: ubuntu-latest
 
     strategy:
@@ -17,11 +28,17 @@ jobs:
           - STMicroelectronics:stm32:Nucleo_64:pnum=P_NUCLEO_WB55_USB_DONGLE
 
     steps:
-      - uses: actions/checkout@main
+      - uses: actions/checkout@v4
       - uses: arduino/compile-sketches@v1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           fqbn: ${{ matrix.fqbn }}
           platforms: |
-            - source-url: https://github.com/stm32duino/BoardManagerFiles/raw/main/package_stmicroelectronics_index.json
-              name: STMicroelectronics:stm32
+            - name: STMicroelectronics:stm32
+              source-url: https://github.com/stm32duino/BoardManagerFiles/raw/main/package_stmicroelectronics_index.json
+          sketch-paths: |
+            - examples
+          cli-compile-flags: |
+            - --build-property
+            - build.extra_flags=-DIDB05A2_SPI_CLOCK_D3
+
