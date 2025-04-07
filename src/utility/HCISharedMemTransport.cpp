@@ -22,11 +22,10 @@
 #include "STM32_WPAN/hw.h"
 #include "otp.h"
 
-#if defined(ARDUINO_NUCLEO_WB15CC) || defined(ARDUINO_P_NUCLEO_WB55RG) ||\
-      defined(ARDUINO_STM32WB5MM_DK) || defined(ARDUINO_P_NUCLEO_WB55_USB_DONGLE)
 HCISharedMemTransportClass HCISharedMemTransport;
-#else
-#error "Unsupported board or shield selected!"
+#if !defined(ARDUINO_NUCLEO_WB15CC) && !defined(ARDUINO_P_NUCLEO_WB55RG) &&\
+    !defined(ARDUINO_STM32WB5MM_DK) && !defined(ARDUINO_P_NUCLEO_WB55_USB_DONGLE)
+#warning "Selected board has never been tested with this library, ensure to have a correct configuration!"
 #endif
 
 /* Private variables ---------------------------------------------------------*/
