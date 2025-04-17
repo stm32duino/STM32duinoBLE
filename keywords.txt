@@ -119,10 +119,6 @@ valueBE	KEYWORD2
 uuid	KEYWORD2
 addCharacteristic	KEYWORD2
 
-wait	KEYWORD2
-peek	KEYWORD2
-write	KEYWORD2
-
 #######################################
 # Constants (LITERAL1)
 #######################################

@@ -553,6 +553,22 @@ bool ATTClass::disconnect()
 
     numDisconnects++;
 
+    BLEDevice bleDevice(_peers[i].addressType, _peers[i].address);
+
+    // clear CCCD values on disconnect
+    for (uint16_t att = 0; att < GATT.attributeCount(); att++) {
+      BLELocalAttribute* attribute = GATT.attribute(att);
+
+      if (attribute->type() == BLETypeCharacteristic) {
+        BLELocalCharacteristic* characteristic = (BLELocalCharacteristic*)attribute;
+
+        characteristic->writeCccdValue(bleDevice, 0x0000);
+      }
+    }
+
+    _longWriteHandle = 0x0000;
+    _longWriteValueLength = 0;
+
     _peers[i].connectionHandle = 0xffff;
     _peers[i].role = 0x00;
     _peers[i].addressType = 0x00;
@@ -582,7 +598,7 @@ BLEDevice ATTClass::central()
   return BLEDevice();
 }
 
-bool ATTClass::handleNotify(uint16_t handle, const uint8_t* value, int length)
+int ATTClass::handleNotify(uint16_t handle, const uint8_t* value, int length)
 {
   int numNotifications = 0;
 
@@ -610,10 +626,10 @@ bool ATTClass::handleNotify(uint16_t handle, const uint8_t* value, int length)
     numNotifications++;
   }
 
-  return (numNotifications > 0);
+  return (numNotifications > 0) ? length : 0;
 }
 
-bool ATTClass::handleInd(uint16_t handle, const uint8_t* value, int length)
+int ATTClass::handleInd(uint16_t handle, const uint8_t* value, int length)
 {
   int numIndications = 0;
 
@@ -650,7 +666,7 @@ bool ATTClass::handleInd(uint16_t handle, const uint8_t* value, int length)
     numIndications++;
   }
 
-  return (numIndications > 0);
+  return (numIndications > 0) ? length : 0;
 }
 
 void ATTClass::error(uint16_t connectionHandle, uint8_t dlen, uint8_t data[])

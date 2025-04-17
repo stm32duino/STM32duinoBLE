@@ -485,6 +485,7 @@ void HCIClass::leAddResolvingAddress(uint8_t addressType, uint8_t* peerAddress, 
     addDevice.peerIRK[15-i]  = peerIrk[i];
     addDevice.localIRK[15-i] = localIrk[i];
   }
+#ifdef _BLE_TRACE_
   Serial.print("ADDTYPE    :");
   btct.printBytes(&addDevice.peerAddressType,1);
   Serial.print("adddddd    :");
@@ -493,6 +494,7 @@ void HCIClass::leAddResolvingAddress(uint8_t addressType, uint8_t* peerAddress, 
   btct.printBytes(addDevice.peerIRK,16);
   Serial.print("localIRK   :");
   btct.printBytes(addDevice.localIRK,16);
+#endif
   sendCommand(OGF_LE_CTL << 10 | 0x27, sizeof(addDevice), &addDevice);
 
   leStartResolvingAddresses();
@@ -516,6 +518,7 @@ int HCIClass::leReadPeerResolvableAddress(uint8_t peerAddressType, uint8_t* peer
 
 
   int res = sendCommand(OGF_LE_CTL << 10 | 0x2B, sizeof(request), &request);
+#ifdef _BLE_TRACE_
   Serial.print("res: 0x");
   Serial.println(res, HEX);
   if(res==0){
@@ -528,6 +531,7 @@ int HCIClass::leReadPeerResolvableAddress(uint8_t peerAddressType, uint8_t* peer
     Serial.print("peer resolvable address: ");
     btct.printBytes(response->peerResolvableAddress,6);
   }
+  #endif
   return res;
 }
 
@@ -566,7 +570,9 @@ int HCIClass::tryResolveAddress(uint8_t* BDAddr, uint8_t* address){
 
 
     if(!HCI._getIRKs(&nIRKs, BDAddrType, BADDRs, IRKs)){
+#ifdef _BLE_TRACE_
       Serial.println("error getting IRKs.");
+#endif
     }
     for(int i=0; i<nIRKs; i++){
       if(!foundMatch){
