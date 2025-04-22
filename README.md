@@ -31,6 +31,17 @@ The user can include the file `app_conf_custom.h` to customize the BLE applicati
 Options wrapped in `#ifndef`, `#endif` in `app_conf_default.h` can be overwritten.
 Additional options can be added.
 
+The user can refer to [AN5270](https://www.st.com/resource/en/application_note/an5270-introduction-to-stm32wb-bluetooth-low-energy-wireless-interface-stmicroelectronics.pdf)
+
+##### Examples
+
+The user can change the Tx Power by redefining `CFG_TX_POWER` using the [`build_opt.h`](https://github.com/stm32duino/Arduino_Core_STM32/wiki/Customize-build-options-using-build_opt.h) file. Possible values are listed in the chapter 
+**4.2 Tx power level**, default value is `0x18`(`-0.15dBm`). To set it at `+1dBm`, `CFG_TX_POWER` have to be defined at `0x1A`:
+
+```
+-DCFG_TX_POWER=0x1A
+```
+
 ### Shield
 
 The user can include the file `ble_spi_conf.h` to define which shield and configuration to use from the following list:
