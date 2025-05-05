@@ -123,17 +123,17 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 ```
 
 
-B-L475E-IOT01A: https://www.st.com/en/evaluation-tools/b-l475e-iot01a.html
-B-L4S5I-IOT01A: https://www.st.com/en/evaluation-tools/b-l4s5i-iot01a.html
-NUCLEO-F401RE: https://www.st.com/en/evaluation-tools/nucleo-f401re.html
-NUCLEO-L053R8: https://www.st.com/en/evaluation-tools/nucleo-l053r8.html
-NUCLEO-L476RG: https://www.st.com/en/evaluation-tools/nucleo-l476rg.html
-NUCLEO-WB15CC: https://www.st.com/en/evaluation-tools/nucleo-wb15cc.html
-P-NUCLEO-WB55RG: https://www.st.com/en/evaluation-tools/p-nucleo-wb55.html
-STEVAL-MKSBOX1V1: https://www.st.com/en/evaluation-tools/steval-mksbox1v1.html
-STEVAL-MKBOXPRO: https://www.st.com/en/evaluation-tools/steval-mkboxpro.html
-STM32L562E-DK: https://www.st.com/en/evaluation-tools/stm32l562e-dk.html
-STM32WB5MM-DK: https://www.st.com/en/evaluation-tools/stm32wb5mm-dk.html
-X-NUCLEO-BNRG2A1: https://www.st.com/en/ecosystems/x-nucleo-bnrg2a1.html
-X-NUCLEO-IDB05A2: https://www.st.com/en/ecosystems/x-nucleo-idb05a2.html
-X-NUCLEO-IDB05A1: https://www.st.com/en/ecosystems/x-nucleo-idb05a1.html
+[B-L475E-IOT01A]: https://www.st.com/en/evaluation-tools/b-l475e-iot01a.html
+[B-L4S5I-IOT01A]: https://www.st.com/en/evaluation-tools/b-l4s5i-iot01a.html
+[NUCLEO-F401RE]: https://www.st.com/en/evaluation-tools/nucleo-f401re.html
+[NUCLEO-L053R8]: https://www.st.com/en/evaluation-tools/nucleo-l053r8.html
+[NUCLEO-L476RG]: https://www.st.com/en/evaluation-tools/nucleo-l476rg.html
+[NUCLEO-WB15CC]: https://www.st.com/en/evaluation-tools/nucleo-wb15cc.html
+[P-NUCLEO-WB55RG]: https://www.st.com/en/evaluation-tools/p-nucleo-wb55.html
+[STEVAL-MKSBOX1V1]: https://www.st.com/en/evaluation-tools/steval-mksbox1v1.html
+[STEVAL-MKBOXPRO]: https://www.st.com/en/evaluation-tools/steval-mkboxpro.html
+[STM32L562E-DK]: https://www.st.com/en/evaluation-tools/stm32l562e-dk.html
+[STM32WB5MM-DK]: https://www.st.com/en/evaluation-tools/stm32wb5mm-dk.html
+[X-NUCLEO-BNRG2A1]: https://www.st.com/en/ecosystems/x-nucleo-bnrg2a1.html
+[X-NUCLEO-IDB05A2]: https://www.st.com/en/ecosystems/x-nucleo-idb05a2.html
+[X-NUCLEO-IDB05A1]: https://www.st.com/en/ecosystems/x-nucleo-idb05a1.html
