@@ -17,7 +17,6 @@
  */
 
 
-#if defined(STM32WBxx)
 /* Includes ------------------------------------------------------------------*/
 #include "stm32_wpan_common.h"
 
@@ -108,6 +107,24 @@ SHCI_CmdStatus_t SHCI_C2_FUS_FwDelete( void )
   p_rsp = (TL_EvtPacket_t *)local_buffer;
 
   shci_send( SHCI_OPCODE_C2_FUS_FW_DELETE,
+             0,
+             0,
+             p_rsp );
+
+  return (SHCI_CmdStatus_t)(((TL_CcEvt_t*)(p_rsp->evtserial.evt.payload))->payload[0]);
+}
+
+SHCI_CmdStatus_t SHCI_C2_FUS_FwPurge( void )
+{
+  /**
+   * Buffer is large enough to hold command complete without payload
+   */
+  uint8_t local_buffer[TL_BLEEVT_CC_BUFFER_SIZE];
+  TL_EvtPacket_t * p_rsp;
+
+  p_rsp = (TL_EvtPacket_t *)local_buffer;
+
+  shci_send( SHCI_OPCODE_C2_FUS_FW_PURGE,
              0,
              0,
              p_rsp );
@@ -760,4 +777,3 @@ SHCI_CmdStatus_t SHCI_GetWirelessFwInfo( WirelessFwInfo_t* pWirelessInfo )
 
   return (SHCI_Success);
 }
-#endif /* STM32WBxx */
