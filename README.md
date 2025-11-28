@@ -1,8 +1,14 @@
 # STM32duinoBLE
 
-This library is a fork of ArduinoBLE library to add the support of SPBTLE-RF, SPBTLE-1S, BLUENRG-M2SP, BLUENRG-LP and BLUENRG-M0 BLE modules.
+This library is a fork of ArduinoBLE library to add the support of  STM32WB, SPBTLE-RF, SPBTLE-1S, BLUENRG-M2SP, BLUENRG-LP and BLUENRG-M0  BLE modules.
 
-It was successfully tested with the [X-NUCLEO-IDB05A2] or [X-NUCLEO-IDB05A1] or [X-NUCLEO-BNRG2A1] expansion board and a [NUCLEO-F401RE] or [NUCLEO-L476RG] or [NUCLEO-L053R8], with [B-L475E-IOT01A], [B-L4S5I-IOT01A], [STEVAL-MKSBOX1V1], [STEVAL-MKBOXPRO] and with [STM32L562E-DK].
+It was successfully tested with the [NUCLEO-WB15CC], [P-NUCLEO-WB55RG], [STM32WB5MM-DK], [X-NUCLEO-IDB05A2] or [X-NUCLEO-IDB05A1] or [X-NUCLEO-BNRG2A1] expansion board and a [NUCLEO-F401RE] or [NUCLEO-L476RG] or [NUCLEO-L053R8], with [B-L475E-IOT01A], [B-L4S5I-IOT01A], [STEVAL-MKSBOX1V1], [STEVAL-MKBOXPRO] and with [STM32L562E-DK].
+
+ - In order to use this library with SM32WBxx series, you need to update the STM32WB Copro Wireless Binaries with stm32wbxx_BLE_HCILayer_fw.bin depending of your mcu:
+
+https://github.com/STMicroelectronics/STM32CubeWB/tree/master/Projects/STM32WB_Copro_Wireless_Binaries
+
+  Each subdirectories contains binaries and Release_Notes.html which explain how to update it.
 
  - In order to use this library with [STEVAL-MKSBOX1V1], you need to update the firmware of the SPBTLE-1S BLE module mounted on that board as described in the following wiki page:
 
@@ -16,6 +22,14 @@ For more information about ArduinoBLE library please visit the official web page
 https://www.arduino.cc/en/Reference/ArduinoBLE
 
 # Configuration
+
+### STM32WB
+
+STM32Cube_WPAN has several configuration options, which are set in the `app_conf.h`.
+This package has a default configuration named `app_conf_default.h`.
+The user can include the file `app_conf_custom.h` to customize the BLE application.
+Options wrapped in `#ifndef`, `#endif` in `app_conf_default.h` can be overwritten.
+Additional options can be added.
 
 ### Shield
 
@@ -70,6 +84,12 @@ This is equivalent to the below configuration using the `CUSTOM_BLE_SPI`:
 #define BLE_RESET       D7
 ```
 
+#### Using a SPI BLE module on STM32WB
+
+If required, user can use a compatible BLE module over SPI.
+
+In the `ble_spi_conf.h`, define `USE_BLE_SPI`.
+
 ## License
 
 ```
@@ -96,9 +116,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 [NUCLEO-F401RE]: https://www.st.com/en/evaluation-tools/nucleo-f401re.html
 [NUCLEO-L053R8]: https://www.st.com/en/evaluation-tools/nucleo-l053r8.html
 [NUCLEO-L476RG]: https://www.st.com/en/evaluation-tools/nucleo-l476rg.html
+[NUCLEO-WB15CC]: https://www.st.com/en/evaluation-tools/nucleo-wb15cc.html
+[P-NUCLEO-WB55RG]: https://www.st.com/en/evaluation-tools/p-nucleo-wb55.html
 [STEVAL-MKSBOX1V1]: https://www.st.com/en/evaluation-tools/steval-mksbox1v1.html
 [STEVAL-MKBOXPRO]: https://www.st.com/en/evaluation-tools/steval-mkboxpro.html
 [STM32L562E-DK]: https://www.st.com/en/evaluation-tools/stm32l562e-dk.html
+[STM32WB5MM-DK]: https://www.st.com/en/evaluation-tools/stm32wb5mm-dk.html
 [X-NUCLEO-BNRG2A1]: https://www.st.com/en/ecosystems/x-nucleo-bnrg2a1.html
 [X-NUCLEO-IDB05A2]: https://www.st.com/en/ecosystems/x-nucleo-idb05a2.html
 [X-NUCLEO-IDB05A1]: https://www.st.com/en/ecosystems/x-nucleo-idb05a1.html
