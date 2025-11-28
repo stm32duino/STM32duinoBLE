@@ -1,7 +1,7 @@
-From a33328182e334e1ddedd368a047d75cf1662e330 Mon Sep 17 00:00:00 2001
+From 1af1d327b5532597512216349abb0d1edef1d89e Mon Sep 17 00:00:00 2001
 From: Frederic Pillon <frederic.pillon@st.com>
 Date: Thu, 13 Jul 2023 17:16:40 +0200
-Subject: [PATCH 2/4] fix: include a timeout when waiting for the cmd_resp
+Subject: [PATCH 2/6] fix: include a timeout when waiting for the cmd_resp
 
 Signed-off-by: Frederic Pillon <frederic.pillon@st.com>
 ---
