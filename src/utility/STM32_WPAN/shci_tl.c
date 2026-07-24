@@ -24,8 +24,11 @@
 #include "stm_list.h"
 #include "shci_tl.h"
 #include "stm32_def.h"
+#if defined(STM32_CORE_VERSION) && (STM32_CORE_VERSION  <= 0x020C0000)
 #include "wiring_time.h"
-
+#else
+#include "wiring.h"
+#endif
 /* Private typedef -----------------------------------------------------------*/
 typedef enum
 {
