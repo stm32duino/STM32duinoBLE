@@ -572,26 +572,40 @@ size_t HCISharedMemTransportClass::write(const uint8_t *data, size_t length)
 //private:
 void HCISharedMemTransportClass::start_ble_rf(void)
 {
-  /* Set the DBP bit in the Power control register 1 (PWR_CR1) */
-  LL_PWR_EnableBkUpAccess();
+  /* Read the actual configured RF Wakeup clock source from registers */
+  uint32_t rfwkpSource = LL_RCC_GetRFWKPClockSource();
 
-  /* LSE belongs to the back-up domain, enable access.*/
-  while (!LL_PWR_IsEnabledBkUpAccess()) {
-  /* Wait for Backup domain access */
+  if (rfwkpSource == LL_RCC_RFWKP_CLKSOURCE_LSE) {
+    /* LSE is selected: Enable LSE and wait for ready */
+    LL_PWR_EnableBkUpAccess();
+    while (!LL_PWR_IsEnabledBkUpAccess()) {
+      /* Wait for Backup domain access */
+    }
+    LL_RCC_ForceBackupDomainReset();
+    LL_RCC_ReleaseBackupDomainReset();
+
+    LL_RCC_LSE_Enable();
+    while (!LL_RCC_LSE_IsReady()) {
+      /* Wait for LSE ready */
+    }
+
+    LL_PWR_DisableBkUpAccess();
+
+    /* Switch OFF LSI as LSE is the source clock */
+    LL_RCC_LSI2_Disable();
   }
-  LL_RCC_ForceBackupDomainReset();
-  LL_RCC_ReleaseBackupDomainReset();
-
-  /* Enable LSE Oscillator (32.768 kHz) */
-  LL_RCC_LSE_Enable();
-  while (!LL_RCC_LSE_IsReady()) {
-    /* Wait for LSE ready */
+#if defined(LL_RCC_RFWKP_CLKSOURCE_LSI)
+  else if (rfwkpSource == LL_RCC_RFWKP_CLKSOURCE_LSI) {
+    /* LSI is selected: Enable LSI1 and wait for ready */
+    LL_RCC_LSI1_Enable();
+    while (!LL_RCC_LSI1_IsReady()) {
+      /* Wait for LSI1 ready */
+    }
   }
-
-  LL_PWR_DisableBkUpAccess();
-
-  /* Switch OFF LSI as LSE is the source clock */
-  LL_RCC_LSI2_Disable();
+#endif
+  else if (rfwkpSource == LL_RCC_RFWKP_CLKSOURCE_HSE_DIV1024) {
+    /* HSE/1024 is selected: No low-speed oscillator needs enabling */
+  }
 }
 
 void HCISharedMemTransportClass::stm32wb_reset(void)
