@@ -1,7 +1,7 @@
-From 4a42f3ebb91d4065d2ed54a80baab22d6feb5bad Mon Sep 17 00:00:00 2001
+From c08c3314fbb5eab1932f3be17e2b8fc77eeb0d06 Mon Sep 17 00:00:00 2001
 From: Frederic Pillon <frederic.pillon@st.com>
 Date: Wed, 10 Jan 2024 18:45:17 +0100
-Subject: [PATCH 3/6] chore: add support for customize app_conf_default.h
+Subject: [PATCH 3/4] chore: add support for customize app_conf_default.h
 
 Signed-off-by: Frederic Pillon <frederic.pillon@st.com>
 ---
@@ -9,7 +9,7 @@ Signed-off-by: Frederic Pillon <frederic.pillon@st.com>
  1 file changed, 45 insertions(+), 13 deletions(-)
 
 diff --git a/src/utility/STM32_WPAN/app_conf_default.h b/src/utility/STM32_WPAN/app_conf_default.h
-index 8db164d..2fd67c7 100644
+index 706ef5f..5fbb234 100644
 --- a/src/utility/STM32_WPAN/app_conf_default.h
 +++ b/src/utility/STM32_WPAN/app_conf_default.h
 @@ -50,7 +50,9 @@
